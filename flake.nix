@@ -24,7 +24,6 @@
           ansible-language-server
           ansible-lint
           lefthook
-          proxmox-auto-install-assistant
           python3
         ];
       };
