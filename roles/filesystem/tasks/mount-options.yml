@@ -6,6 +6,7 @@
     fstype: ext4
     state: mounted
     opts: defaults,nosuid,nodev,noexec,relatime
+  notify: Reboot
 - name: Configure /dev/shm
   ansible.posix.mount:
     path: /dev/shm
@@ -13,6 +14,7 @@
     fstype: tmpfs
     state: mounted
     opts: defaults,rw,nosuid,nodev,noexec,relatime
+  notify: Reboot
 - name: Configure /home
   ansible.posix.mount:
     path: /home
@@ -20,6 +22,7 @@
     fstype: ext4
     state: mounted
     opts: defaults,nosuid,nodev,relatime
+  notify: Reboot
 - name: Configure /var
   ansible.posix.mount:
     path: /var
@@ -27,6 +30,7 @@
     fstype: ext4
     state: mounted
     opts: defaults,nosuid,nodev,relatime
+  notify: Reboot
 - name: Configure /var/tmp
   ansible.posix.mount:
     path: /var/tmp
@@ -34,6 +38,7 @@
     fstype: ext4
     state: mounted
     opts: defaults,nosuid,nodev,noexec,relatime
+  notify: Reboot
 - name: Configure /var/log
   ansible.posix.mount:
     path: /var/log
@@ -41,6 +46,7 @@
     fstype: ext4
     state: mounted
     opts: defaults,nosuid,nodev,noexec,relatime
+  notify: Reboot
 - name: Configure /var/log/audit
   ansible.posix.mount:
     path: /var/log/audit
@@ -48,3 +54,4 @@
     fstype: ext4
     state: mounted
     opts: defaults,nosuid,nodev,noexec,relatime
+  notify: Reboot

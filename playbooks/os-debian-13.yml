@@ -13,8 +13,6 @@
       ansible.builtin.import_role:
         name: filesystem
         tasks_from: mount-options.yml
-    - name: Reboot
-      ansible.builtin.reboot:
 - name: Configure APT
   hosts: proxmox
   tasks:
