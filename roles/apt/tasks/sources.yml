@@ -1,28 +1,34 @@
 ---
-- name: Find All Files Inside `/etc/apt/sources.list.d/`
+- name: Discover Managed APT Sources
+  ansible.builtin.set_fact:
+    apt_sources_files: "{{ lookup('ansible.builtin.fileglob', role_path + '/files/sources/*.sources', wantlist=True) | map('basename') | list }}"
+- name: Remove Legacy /etc/apt/sources.list
+  ansible.builtin.file:
+    path: /etc/apt/sources.list
+    state: absent
+- name: Ensure /etc/apt/sources.list.d Exists
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d
+    owner: root
+    group: root
+    mode: '0655'
+    state: directory
+- name: Copy Sources
+  ansible.builtin.copy:
+    src: sources/{{ item }}
+    dest: /etc/apt/sources.list.d/{{ item }}
+    owner: root
+    group: root
+    mode: '0655'
+  loop: '{{ apt_sources_files }}'
+- name: Find Existing Files in /etc/apt/sources.list.d
   ansible.builtin.find:
     paths: /etc/apt/sources.list.d
-    hidden: true
-    file_type: any
-  register: apt_dir_contents
-- name: Remove all contents
+    file_type: file
+  register: apt_existing_apt_sources
+- name: Remove Unmanaged APT Sources
   ansible.builtin.file:
     path: '{{ item.path }}'
     state: absent
-  loop: '{{ apt_dir_contents.files }}'
-- name: Copy `debian.sources` to `/etc/apt/sources.list.d/debian.sources`'
-  ansible.builtin.copy:
-    src: debian.sources
-    dest: /etc/apt/sources.list.d/debian.sources
-    owner: root
-    group: root
-    mode: '0755'
-    backup: true
-- name: Copy `proxmox.sources` to `/etc/apt/sources.list.d/proxmox.sources`'
-  ansible.builtin.copy:
-    src: proxmox.sources
-    dest: /etc/apt/sources.list.d/proxmox.sources
-    owner: root
-    group: root
-    mode: '0755'
-    backup: true
+  loop: '{{ apt_existing_apt_sources.files }}'
+  when: item.path | basename not in apt_sources_files

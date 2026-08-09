@@ -15,3 +15,17 @@
         tasks_from: mount-options.yml
     - name: Reboot
       ansible.builtin.reboot:
+- name: Configure APT
+  hosts: proxmox
+  tasks:
+    - name: Ensure Correct Services
+      ansible.builtin.import_role:
+        name: apt
+        tasks_from: sources.yml
+    - name: Ensure Correct Access
+      ansible.builtin.import_role:
+        name: apt
+        tasks_from: directory-access.yml
+    - name: Update APT Cache
+      ansible.builtin.apt:
+        update_cache: true

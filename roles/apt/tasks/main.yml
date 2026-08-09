@@ -1,5 +1,0 @@
----
-- name: Ensure Correct Sources
-  ansible.builtin.import_tasks: sources.yml
-- name: Perform Full System Upgrade
-  ansible.builtin.import_tasks: full-upgrade.yml
