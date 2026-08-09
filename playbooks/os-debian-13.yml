@@ -1,0 +1,8 @@
+---
+- name: Remove Unrequired Kernel Modules
+  hosts: proxmox
+  tasks:
+    - name: Remove Unrequired Filesystem Kernel Modules
+      ansible.builtin.import_role:
+        name: kernel-modules
+        tasks_from: filesystem-modules.yml
