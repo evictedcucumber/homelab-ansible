@@ -26,6 +26,10 @@
       ansible.builtin.import_role:
         name: apt
         tasks_from: directory-access.yml
-    - name: Update APT Cache
+    - name: Upgrade System
       ansible.builtin.apt:
         update_cache: true
+        upgrade: safe
+        autoremove: true
+        autoclean: true
+        purge: true
