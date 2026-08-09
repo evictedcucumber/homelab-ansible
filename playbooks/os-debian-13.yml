@@ -6,3 +6,12 @@
       ansible.builtin.import_role:
         name: kernel-modules
         tasks_from: filesystem-modules.yml
+- name: Configure Filesystem
+  hosts: proxmox
+  tasks:
+    - name: Set Mount Options
+      ansible.builtin.import_role:
+        name: filesystem
+        tasks_from: mount-options.yml
+    - name: Reboot
+      ansible.builtin.reboot:

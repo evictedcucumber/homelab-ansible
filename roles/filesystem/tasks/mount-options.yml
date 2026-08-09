@@ -1,0 +1,50 @@
+---
+- name: Configure /tmp
+  ansible.posix.mount:
+    path: /tmp
+    src: /dev/mapper/vg0-tmp
+    fstype: ext4
+    state: mounted
+    opts: defaults,nosuid,nodev,noexec,relatime
+- name: Configure /dev/shm
+  ansible.posix.mount:
+    path: /dev/shm
+    src: tmpfs
+    fstype: tmpfs
+    state: mounted
+    opts: defaults,rw,nosuid,nodev,noexec,relatime
+- name: Configure /home
+  ansible.posix.mount:
+    path: /home
+    src: /dev/mapper/vg0-home
+    fstype: ext4
+    state: mounted
+    opts: defaults,nosuid,nodev,relatime
+- name: Configure /var
+  ansible.posix.mount:
+    path: /var
+    src: /dev/mapper/vg0-var
+    fstype: ext4
+    state: mounted
+    opts: defaults,nosuid,nodev,relatime
+- name: Configure /var/tmp
+  ansible.posix.mount:
+    path: /var/tmp
+    src: /dev/mapper/vg0-vartmp
+    fstype: ext4
+    state: mounted
+    opts: defaults,nosuid,nodev,noexec,relatime
+- name: Configure /var/log
+  ansible.posix.mount:
+    path: /var/log
+    src: /dev/mapper/vg0-varlog
+    fstype: ext4
+    state: mounted
+    opts: defaults,nosuid,nodev,noexec,relatime
+- name: Configure /var/log/audit
+  ansible.posix.mount:
+    path: /var/log/audit
+    src: /dev/mapper/vg0-audit
+    fstype: ext4
+    state: mounted
+    opts: defaults,nosuid,nodev,noexec,relatime
