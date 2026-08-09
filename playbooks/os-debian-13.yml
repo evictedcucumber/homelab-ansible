@@ -37,3 +37,10 @@
     - name: Configure AppArmor
       ansible.builtin.import_role:
         name: app-armor
+- name: Configure Grub
+  hosts: proxmox
+  tasks:
+    - name: Configure Grub Superuser
+      ansible.builtin.import_role:
+        name: grub
+        tasks_from: secure-grub.yml

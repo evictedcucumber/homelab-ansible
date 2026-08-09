@@ -1,0 +1,8 @@
+---
+- name: Update Grub
+  ansible.builtin.command: update-grub
+  listen: Update Grub
+  changed_when: true
+- name: Reboot
+  ansible.builtin.reboot:
+  listen: Reboot

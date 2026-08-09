@@ -1,0 +1,6 @@
+#!/bin/sh
+exec tail -n +3 $0
+# This file is managed by Ansible - do not edit manually
+
+set superusers="{{ grub_superuser }}"
+password_pbkdf2 {{ grub_superuser }} {{ grub_pbkdf2_hash }}
