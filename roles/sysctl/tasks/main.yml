@@ -1,0 +1,14 @@
+---
+- name: Ensure /etc/sysctl.d Exists
+  ansible.builtin.file:
+    path: /etc/sysctl.d
+    state: directory
+    mode: '0644'
+    owner: root
+    group: root
+- name: Copy Filesystem Config
+  ansible.builtin.import_tasks:
+    file: fs.yml
+- name: Copy Kernel Config
+  ansible.builtin.import_tasks:
+    file: kernel.yml

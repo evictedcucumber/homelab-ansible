@@ -19,6 +19,25 @@
       ansible.builtin.import_role:
         name: filesystem
         tasks_from: mount-options.yml
+- name: Configure Security Limits
+  hosts: proxmox
+  tasks:
+    - name: Configure Security Limits
+      ansible.builtin.import_role:
+        name: security
+        tasks_from: limits.yml
+- name: Configure Sysctl
+  hosts: proxmox
+  tasks:
+    - name: Configure Sysctl
+      ansible.builtin.import_role:
+        name: sysctl
+- name: Configure AppArmor
+  hosts: proxmox
+  tasks:
+    - name: Configure AppArmor
+      ansible.builtin.import_role:
+        name: app-armor
 - name: Configure APT
   hosts: proxmox
   tasks:
@@ -41,27 +60,3 @@
       ansible.builtin.import_role:
         name: apt
         tasks_from: ensure_removed.yml
-- name: Configure AppArmor
-  hosts: proxmox
-  tasks:
-    - name: Configure AppArmor
-      ansible.builtin.import_role:
-        name: app-armor
-- name: Configure Sysctl
-  hosts: proxmox
-  tasks:
-    - name: Configure Filesystem Sysctl
-      ansible.builtin.import_role:
-        name: sysctl
-        tasks_from: fs.yml
-    - name: Configure Kernel Sysctl
-      ansible.builtin.import_role:
-        name: sysctl
-        tasks_from: kernel.yml
-- name: Configure Security Limits
-  hosts: proxmox
-  tasks:
-    - name: Configure Security Limits
-      ansible.builtin.import_role:
-        name: security
-        tasks_from: limits.yml

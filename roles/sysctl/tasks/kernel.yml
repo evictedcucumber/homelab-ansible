@@ -2,7 +2,7 @@
 - name: Set kernel.yama.ptrace_scope
   ansible.posix.sysctl:
     name: kernel.yama.ptrace_scope
-    value: '1'
+    value: '3'
     sysctl_file: '{{ files.sysctl.kernel }}'
     sysctl_set: true
     state: present
