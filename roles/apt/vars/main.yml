@@ -1,2 +1,2 @@
 ---
-apt_ensure_removed: [prelink, apport, systemd-coredump]
+apt_ensure_removed: [prelink, apport, systemd-coredump, gdm3]

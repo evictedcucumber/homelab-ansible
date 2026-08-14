@@ -4,4 +4,5 @@
     name: '{{ item }}'
     state: absent
     purge: true
+    autoremove: true
   loop: '{{ apt_ensure_removed }}'
