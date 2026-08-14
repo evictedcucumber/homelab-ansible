@@ -4,10 +4,6 @@
     name: '{{ item }}'
     state: present
   loop: [apparmor, apparmor-utils]
-- name: Configure Grub
-  ansible.builtin.import_role:
-    name: grub
-    tasks_from: app-armor.yml
 - name: Set kernel.apparmor_restrict_unprivileged_unconfined
   ansible.posix.sysctl:
     name: kernel.apparmor_restrict_unprivileged_unconfined
@@ -17,3 +13,13 @@
     state: present
     reload: true
   notify: Reboot
+- name: Remove /etc/default/grub.d
+  ansible.builtin.file:
+    path: /etc/default/grub.d
+    state: absent
+- name: Remove apparmor=0 Grub Config Lines
+  ansible.builtin.replace:
+    path: /etc/default/grub
+    regexp: (GRUB_CMDLINE_LINUX(?:_DEFAULT)?=".*?)\s*apparmor=0\s*(.*?")
+    replace: \1\2
+  notify: [Update Grub, Reboot]
