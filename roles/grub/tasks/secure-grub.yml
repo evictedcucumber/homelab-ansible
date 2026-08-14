@@ -5,11 +5,3 @@
     owner: root
     group: root
     mode: '0771'
-- name: Deploy Custom Grub Superuser/Password Config
-  ansible.builtin.template:
-    src: 01-custom-auth.j2
-    dest: /etc/grub.d/01-custom-auth
-    owner: root
-    group: root
-    mode: '0755'
-  notify: Update Grub
