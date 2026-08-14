@@ -1,0 +1,19 @@
+---
+kernel_modules:
+  filesystem_modules:
+    disabled:
+      - cifs
+      - cramfs
+      - exfat
+      - ext
+      - firewire-core
+      - freevxfs
+      - fscache
+      - gfs2
+      - hfs
+      - hfsplus
+      - jffs2
+      - nfs_common
+      - nfsd
+      - smbfs_common
+      - usb-storage
