@@ -1,7 +1,0 @@
----
-- name: Ensure Access to /boot/grub/grub.cfg
-  ansible.builtin.file:
-    path: /boot/grub/grub.cfg
-    owner: root
-    group: root
-    mode: '0771'
