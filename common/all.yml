@@ -1,4 +1,7 @@
 ---
 ansible_user: root
 ansible_python_interpreter: /usr/bin/python3
-grub_superuser: admin
+files:
+  sysctl:
+    fs: /etc/sysctl.d/20-fs.conf
+    kernel: /etc/sysctl.d/20-kernel.conf

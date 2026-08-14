@@ -31,6 +31,10 @@
         autoremove: true
         autoclean: true
         purge: true
+    - name: Ensure Removed
+      ansible.builtin.import_role:
+        name: apt
+        tasks_from: ensure_removed.yml
 - name: Configure AppArmor
   hosts: proxmox
   tasks:
@@ -44,3 +48,21 @@
       ansible.builtin.import_role:
         name: grub
         tasks_from: secure-grub.yml
+- name: Configure Sysctl
+  hosts: proxmox
+  tasks:
+    - name: Configure Filesystem Sysctl
+      ansible.builtin.import_role:
+        name: sysctl
+        tasks_from: fs.yml
+    - name: Configure Kernel Sysctl
+      ansible.builtin.import_role:
+        name: sysctl
+        tasks_from: kernel.yml
+- name: Configure Security Limits
+  hosts: proxmox
+  tasks:
+    - name: Configure Security Limits
+      ansible.builtin.import_role:
+        name: security
+        tasks_from: limits.yml

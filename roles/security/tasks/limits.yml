@@ -1,0 +1,6 @@
+---
+- name: Set Security Limits
+  ansible.builtin.copy:
+    src: 60-limits.conf
+    dest: /etc/security/limits.d/60-limits.conf
+    mode: '0644'

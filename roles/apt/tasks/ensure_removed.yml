@@ -1,0 +1,7 @@
+---
+- name: Ensure Removed
+  ansible.builtin.apt:
+    name: '{{ item }}'
+    state: absent
+    purge: true
+  loop: '{{ apt_ensure_removed }}'

@@ -12,7 +12,7 @@
   ansible.posix.sysctl:
     name: kernel.apparmor_restrict_unprivileged_unconfined
     value: '1'
-    sysctl_file: /etc/sysctl.d/60-kernel_sysctl.conf
+    sysctl_file: '{{ files.sysctl.kernel }}'
     sysctl_set: true
     state: present
     reload: true

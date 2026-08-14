@@ -1,0 +1,41 @@
+---
+- name: Set kernel.yama.ptrace_scope
+  ansible.posix.sysctl:
+    name: kernel.yama.ptrace_scope
+    value: '1'
+    sysctl_file: '{{ files.sysctl.kernel }}'
+    sysctl_set: true
+    state: present
+    reload: true
+- name: Set kernel.dmesg_restrict
+  ansible.posix.sysctl:
+    name: kernel.dmesg_restrict
+    value: '1'
+    sysctl_file: '{{ files.sysctl.kernel }}'
+    sysctl_set: true
+    state: present
+    reload: true
+- name: Set kernel.kptr_restrict
+  ansible.posix.sysctl:
+    name: kernel.kptr_restrict
+    value: '2'
+    sysctl_file: '{{ files.sysctl.kernel }}'
+    sysctl_set: true
+    state: present
+    reload: true
+- name: Set kernel.randomize_va_space
+  ansible.posix.sysctl:
+    name: kernel.randomize_va_space
+    value: '2'
+    sysctl_file: '{{ files.sysctl.kernel }}'
+    sysctl_set: true
+    state: present
+    reload: true
+- name: Set kernel.yama.ptrace_scope
+  ansible.posix.sysctl:
+    name: kernel.yama.ptrace_scope
+    value: '3'
+    sysctl_file: '{{ files.sysctl.kernel }}'
+    sysctl_set: true
+    state: present
+    reload: true
