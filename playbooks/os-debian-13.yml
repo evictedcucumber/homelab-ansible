@@ -44,10 +44,14 @@
 - name: Configure Grub
   hosts: proxmox
   tasks:
-    - name: Configure Grub Superuser
+    - name: Configure Grub
       ansible.builtin.import_role:
         name: grub
         tasks_from: secure-grub.yml
+    - name: Configure Grub Params
+      ansible.builtin.import_role:
+        name: grub
+        tasks_from: params.yml
 - name: Configure Sysctl
   hosts: proxmox
   tasks:
