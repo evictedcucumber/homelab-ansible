@@ -5,6 +5,7 @@ apt_ensure_removed:
   - autofs
   - avahi-daemon
   - bind9
+  - bluez
   - cups
   - dnsmasq
   - dovecot-imapd

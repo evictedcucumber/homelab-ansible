@@ -5,3 +5,4 @@ files:
   sysctl:
     fs: /etc/sysctl.d/20-fs.conf
     kernel: /etc/sysctl.d/20-kernel.conf
+    network: /etc/sysctl.d/20-network.conf

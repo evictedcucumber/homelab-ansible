@@ -1,13 +1,13 @@
 ---
-- name: Ensure Module Not Loaded
+- name: Ensure Filesystem Modules Not Loaded
   community.general.modprobe:
     name: '{{ item }}'
     state: absent
     persistent: absent
   loop: '{{ kernel_modules.filesystem_modules.disabled }}'
-- name: Copy Module Config
+- name: Copy Filesystem Modules Config
   ansible.builtin.copy:
-    src: 60-{{ item }}.conf
+    src: filesystem/60-{{ item }}.conf
     dest: /etc/modprobe.d/60-{{ item }}.conf
     mode: '0644'
   loop: '{{ kernel_modules.filesystem_modules.disabled }}'
