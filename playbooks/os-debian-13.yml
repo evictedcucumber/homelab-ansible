@@ -36,12 +36,6 @@
     - name: Configure Sysctl
       ansible.builtin.import_role:
         name: sysctl
-- name: Configure AppArmor
-  hosts: proxmox
-  tasks:
-    - name: Configure AppArmor
-      ansible.builtin.import_role:
-        name: app-armor
 - name: Configure APT
   hosts: proxmox
   tasks:
@@ -60,6 +54,10 @@
         autoremove: true
         autoclean: true
         purge: true
+    - name: Ensure Installed
+      ansible.builtin.import_role:
+        name: apt
+        tasks_from: ensure_installed.yml
     - name: Ensure Removed
       ansible.builtin.import_role:
         name: apt

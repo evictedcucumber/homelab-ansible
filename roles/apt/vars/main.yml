@@ -1,4 +1,5 @@
 ---
+apt_ensure_installed: [apparmor, apparmor-utils]
 apt_ensure_removed:
   - apache2
   - apport

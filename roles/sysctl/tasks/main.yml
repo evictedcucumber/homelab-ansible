@@ -6,12 +6,12 @@
     mode: '0644'
     owner: root
     group: root
-- name: Copy Filesystem Config
-  ansible.builtin.import_tasks:
-    file: fs.yml
-- name: Copy Kernel Config
-  ansible.builtin.import_tasks:
-    file: kernel.yml
-- name: Copy Network Config
-  ansible.builtin.import_tasks:
-    file: network.yml
+- name: Set Sysctl Config
+  ansible.posix.sysctl:
+    name: '{{ item.key }}'
+    value: '{{ item.value | string }}'
+    sysctl_file: '{{ sysctl_files[item.key | split(".") | first] }}'
+    sysctl_set: true
+    state: present
+    reload: true
+  loop: '{{ sysctl_config | flatten_dict | dict2items }}'
