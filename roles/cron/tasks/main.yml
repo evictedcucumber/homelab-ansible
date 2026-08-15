@@ -1,4 +1,8 @@
 ---
+- name: Ensure at is Removed
+  ansible.builtin.apt:
+    name: at
+    state: absent
 - name: Ensure cron is Installed
   ansible.builtin.apt:
     name: cron
