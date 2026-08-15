@@ -17,3 +17,5 @@ kernel_modules:
       - nfsd
       - smbfs_common
       - usb-storage
+  network_modules:
+    disabled: [atm, can, dccp, rds, sctp, tipc]
