@@ -67,3 +67,9 @@
       ansible.builtin.import_role:
         name: ntp
         tasks_from: chrony.yml
+- name: Configure Schedulers
+  hosts: proxmox
+  tasks:
+    - name: Configure cron
+      ansible.builtin.import_role:
+        name: cron
