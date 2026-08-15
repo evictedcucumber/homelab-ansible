@@ -9,21 +9,29 @@ apt_ensure_removed:
   - dnsmasq
   - dovecot-imapd
   - dovecot-pop3d
+  - ftp
   - gdm3
+  - inetutils-telnet
   - kea
+  - ldap-utils
   - nfs-kernel-server
   - nginx
+  - nis
   - postfix
   - prelink
   - rpcbind
+  - rsh-client
   - rsync
   - samba
   - slapd
   - snmpd
   - squid
   - systemd-coredump
+  - talk
+  - telnet
   - telnetd
   - tftpd-hpa
+  - tnftp
   - vsftpd
   - xinetd
   - xserver-common
