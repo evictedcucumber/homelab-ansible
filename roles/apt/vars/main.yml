@@ -1,2 +1,30 @@
 ---
-apt_ensure_removed: [prelink, apport, systemd-coredump, gdm3]
+apt_ensure_removed:
+  - apache2
+  - apport
+  - autofs
+  - avahi-daemon
+  - bind9
+  - cups
+  - dnsmasq
+  - dovecot-imapd
+  - dovecot-pop3d
+  - gdm3
+  - kea
+  - nfs-kernel-server
+  - nginx
+  - postfix
+  - prelink
+  - rpcbind
+  - rsync
+  - samba
+  - slapd
+  - snmpd
+  - squid
+  - systemd-coredump
+  - telnetd
+  - tftpd-hpa
+  - vsftpd
+  - xinetd
+  - xserver-common
+  - ypserv
