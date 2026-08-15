@@ -60,3 +60,10 @@
       ansible.builtin.import_role:
         name: apt
         tasks_from: ensure_removed.yml
+- name: Configure NTP
+  hosts: proxmox
+  tasks:
+    - name: Configure chrony
+      ansible.builtin.import_role:
+        name: ntp
+        tasks_from: chrony.yml
