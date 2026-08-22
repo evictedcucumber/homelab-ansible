@@ -1,31 +1,23 @@
 {
-  description = "Ansible config for my homelab";
+  description = "Environment for my Ansible Homelab Configuration.";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  outputs = {nixpkgs, ...}: let
+    system = "x86_64-linux";
+    pkgs = import nixpkgs {
+      inherit system;
 
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/master";
-    flake-utils.url = "github:numtide/flake-utils";
+      config.allowUnfree = true;
+    };
+  in {
+    devShells.${system}.default = pkgs.mkShell {
+      name = "homelab-ansible";
+      packages = with pkgs; [
+        ansible
+        ansible-language-server
+        ansible-lint
+        lefthook
+        python3
+      ];
+    };
   };
-  outputs = {
-    nixpkgs,
-    flake-utils,
-    ...
-  }:
-    flake-utils.lib.eachSystem flake-utils.lib.allSystems (system: let
-      pkgs = import nixpkgs {
-        inherit system;
-
-        config.allowUnfree = true;
-      };
-    in {
-      devShells.default = pkgs.mkShell {
-        name = "ansible-homelab";
-        packages = with pkgs; [
-          ansible
-          ansible-language-server
-          ansible-lint
-          lefthook
-          python3
-        ];
-      };
-    });
 }
