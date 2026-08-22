@@ -4,10 +4,10 @@
     name: '{{ item }}'
     state: absent
     persistent: absent
-  loop: '{{ kernel_modules.network_modules.disabled }}'
+  loop: '{{ kernel_modules_disabled.network_modules.disabled }}'
 - name: Copy Network Modules Config
   ansible.builtin.copy:
     src: network/60-{{ item }}.conf
     dest: /etc/modprobe.d/60-{{ item }}.conf
     mode: '0644'
-  loop: '{{ kernel_modules.network_modules.disabled }}'
+  loop: '{{ kernel_modules_disabled.network_modules.disabled }}'

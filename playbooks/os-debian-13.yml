@@ -10,11 +10,11 @@
   tasks:
     - name: Remove Unrequired Filesystem Kernel Modules
       ansible.builtin.import_role:
-        name: kernel-modules
+        name: kernel_modules
         tasks_from: filesystem-modules.yml
     - name: Remove Unrequired Network Kernel Modules
       ansible.builtin.import_role:
-        name: kernel-modules
+        name: kernel_modules
         tasks_from: network-modules.yml
 - name: Configure Filesystem
   hosts: proxmox

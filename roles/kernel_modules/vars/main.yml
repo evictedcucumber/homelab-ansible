@@ -1,5 +1,5 @@
 ---
-kernel_modules:
+kernel_modules_disabled:
   filesystem_modules:
     disabled:
       - cifs

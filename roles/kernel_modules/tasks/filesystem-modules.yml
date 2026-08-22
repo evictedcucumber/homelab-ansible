@@ -4,10 +4,10 @@
     name: '{{ item }}'
     state: absent
     persistent: absent
-  loop: '{{ kernel_modules.filesystem_modules.disabled }}'
+  loop: '{{ kernel_modules_disabled.filesystem_modules.disabled }}'
 - name: Copy Filesystem Modules Config
   ansible.builtin.copy:
     src: filesystem/60-{{ item }}.conf
     dest: /etc/modprobe.d/60-{{ item }}.conf
     mode: '0644'
-  loop: '{{ kernel_modules.filesystem_modules.disabled }}'
+  loop: '{{ kernel_modules_disabled.filesystem_modules.disabled }}'
