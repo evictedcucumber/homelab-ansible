@@ -1,0 +1,131 @@
+---
+- name: Ensure Latest Version of `libpam-runtime` is Installed # noqa: package-latest
+  ansible.builtin.apt:
+    name: libpam-runtime
+    state: latest
+    update_cache: true
+- name: Ensure Latest Version of `libpam-modules` is Installed # noqa: package-latest
+  ansible.builtin.apt:
+    name: libpam-modules
+    state: latest
+    update_cache: true
+- name: Ensure Latest Version of `libpam-pwquality` is Installed # noqa: package-latest
+  ansible.builtin.apt:
+    name: libpam-pwquality
+    state: latest
+    update_cache: true
+- name: Check `pam_unix` Module Status
+  ansible.builtin.command: grep -P -- '\bpam_unix\.so\b' /etc/pam.d/common-auth
+  register: pam_unix_check
+  changed_when: false
+  failed_when: false
+- name: Ensure `pam_unix` Module is Enabled
+  ansible.builtin.command: pam-auth-update --enable unix
+  changed_when: true
+  when: pam_unix_check.rc != 0
+- name: Copy `faillock` PAM Profile
+  ansible.builtin.copy:
+    src: pam-configs/faillock
+    dest: /usr/share/pam-configs/faillock
+    owner: root
+    group: root
+    mode: '0644'
+  register: pam_faillock_profile_copy
+- name: Copy `faillock_notify` PAM Profile
+  ansible.builtin.copy:
+    src: pam-configs/faillock_notify
+    dest: /usr/share/pam-configs/faillock_notify
+    owner: root
+    group: root
+    mode: '0644'
+  register: pam_faillock_notify_profile_copy
+- name: Check `pam_faillock` Module Status
+  ansible.builtin.command: grep -P -- '\bpam_faillock\.so\b' /etc/pam.d/common-auth
+  register: pam_faillock_check
+  changed_when: false
+  failed_when: false
+- name: Ensure `pam_faillock` Module is Enabled
+  ansible.builtin.command: pam-auth-update --enable {{ item }}
+  loop:
+    - faillock
+    - faillock_notify
+  changed_when: true
+  when: >-
+    pam_faillock_check.rc != 0
+    or pam_faillock_profile_copy.changed
+    or pam_faillock_notify_profile_copy.changed
+- name: Copy `pwquality` PAM Profile
+  ansible.builtin.copy:
+    src: pam-configs/pwquality
+    dest: /usr/share/pam-configs/pwquality
+    owner: root
+    group: root
+    mode: '0644'
+  register: pam_pwquality_profile_copy
+- name: Check `pam_pwquality` Module Status
+  ansible.builtin.command: grep -P -- '\bpam_pwquality\.so\b' /etc/pam.d/common-password
+  register: pam_pwquality_check
+  changed_when: false
+  failed_when: false
+- name: Ensure `pam_pwquality` Module is Enabled
+  ansible.builtin.command: pam-auth-update --enable pwquality
+  changed_when: true
+  when: pam_pwquality_check.rc != 0 or pam_pwquality_profile_copy.changed
+- name: Copy `pwhistory` PAM Profile
+  ansible.builtin.copy:
+    src: pam-configs/pwhistory
+    dest: /usr/share/pam-configs/pwhistory
+    owner: root
+    group: root
+    mode: '0644'
+  register: pam_pwhistory_profile_copy
+- name: Check `pam_pwhistory` Module Status
+  ansible.builtin.command: grep -P -- '\bpam_pwhistory\.so\b' /etc/pam.d/common-password
+  register: pam_pwhistory_check
+  changed_when: false
+  failed_when: false
+- name: Ensure `pam_pwhistory` Module is Enabled
+  ansible.builtin.command: pam-auth-update --enable pwhistory
+  changed_when: true
+  when: pam_pwhistory_check.rc != 0 or pam_pwhistory_profile_copy.changed
+- name: Copy `/etc/security/faillock.conf`
+  ansible.builtin.copy:
+    src: faillock.conf
+    dest: /etc/security/faillock.conf
+    owner: root
+    group: root
+    mode: '0644'
+- name: Ensure `/etc/security/pwquality.conf.d` Directory Exists
+  ansible.builtin.file:
+    path: /etc/security/pwquality.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+- name: Copy `/etc/security/pwquality.conf.d/50-cis.conf`
+  ansible.builtin.copy:
+    src: pwquality.conf.d/50-cis.conf
+    dest: /etc/security/pwquality.conf.d/50-cis.conf
+    owner: root
+    group: root
+    mode: '0644'
+- name: Find Existing Files in `/etc/security/pwquality.conf.d`
+  ansible.builtin.find:
+    paths: /etc/security/pwquality.conf.d
+    file_type: file
+  register: pam_pwquality_confd_existing
+- name: Remove Unmanaged `/etc/security/pwquality.conf.d` Files
+  ansible.builtin.file:
+    path: '{{ item.path }}'
+    state: absent
+  loop: '{{ pam_pwquality_confd_existing.files }}'
+  loop_control:
+    label: '{{ item.path }}'
+  when: item.path | basename != '50-cis.conf'
+- name: Copy `/etc/security/pwhistory.conf`
+  ansible.builtin.copy:
+    src: pwhistory.conf
+    dest: /etc/security/pwhistory.conf
+    owner: root
+    group: root
+    mode: '0644'

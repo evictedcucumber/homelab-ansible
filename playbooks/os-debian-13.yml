@@ -90,3 +90,10 @@
     - name: Configure SSH
       ansible.builtin.import_role:
         name: ssh
+- name: Configure PAM
+  hosts: proxmox
+  gather_facts: false
+  tasks:
+    - name: Configure PAM
+      ansible.builtin.import_role:
+        name: pam
