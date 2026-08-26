@@ -1,3 +1,0 @@
----
-firewall_root_dir: /etc/pve/firewall
-firewall_node_dir: "{{ '/etc/pve/nodes/' ~ inventory_hostname_short }}"
