@@ -1,0 +1,45 @@
+---
+- name: Ensure Ansible Control Node Public Key in `root` Authorized Keys
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ lookup('file', ansible_ssh_public_key_file) }}"
+    state: present
+- name: Find SSH Private Host Key Files
+  ansible.builtin.find:
+    paths: /etc/ssh
+    patterns: ssh_host_*_key
+    file_type: file
+  register: ssh_private_host_keys
+- name: Ensure Permissions on SSH Private Host Key Files
+  ansible.builtin.file:
+    path: '{{ item.path }}'
+    owner: root
+    group: root
+    mode: '0600'
+  loop: '{{ ssh_private_host_keys.files }}'
+  loop_control:
+    label: '{{ item.path }}'
+- name: Find SSH Public Host Key Files
+  ansible.builtin.find:
+    paths: /etc/ssh
+    patterns: ssh_host_*_key.pub
+    file_type: file
+  register: ssh_public_host_keys
+- name: Ensure Permissions on SSH Public Host Key Files
+  ansible.builtin.file:
+    path: '{{ item.path }}'
+    owner: root
+    group: root
+    mode: '0644'
+  loop: '{{ ssh_public_host_keys.files }}'
+  loop_control:
+    label: '{{ item.path }}'
+- name: Copy `/etc/ssh/sshd_config`
+  ansible.builtin.copy:
+    src: sshd_config
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: '0600'
+    backup: true
+  notify: Restart `sshd` Service

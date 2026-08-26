@@ -1,12 +1,14 @@
 ---
 - name: Configure Grub
   hosts: proxmox
+  gather_facts: false
   tasks:
     - name: Configure Grub
       ansible.builtin.import_role:
         name: grub
 - name: Remove Unrequired Kernel Modules
   hosts: proxmox
+  gather_facts: false
   tasks:
     - name: Remove Unrequired Filesystem Kernel Modules
       ansible.builtin.import_role:
@@ -18,6 +20,7 @@
         tasks_from: network-modules.yml
 - name: Configure Filesystem
   hosts: proxmox
+  gather_facts: false
   tasks:
     - name: Set Mount Options
       ansible.builtin.import_role:
@@ -25,6 +28,7 @@
         tasks_from: mount-options.yml
 - name: Configure Security Limits
   hosts: proxmox
+  gather_facts: false
   tasks:
     - name: Configure Security Limits
       ansible.builtin.import_role:
@@ -32,12 +36,14 @@
         tasks_from: limits.yml
 - name: Configure Sysctl
   hosts: proxmox
+  gather_facts: false
   tasks:
     - name: Configure Sysctl
       ansible.builtin.import_role:
         name: sysctl
 - name: Configure APT
   hosts: proxmox
+  gather_facts: false
   tasks:
     - name: Ensure Correct Services
       ansible.builtin.import_role:
@@ -64,6 +70,7 @@
         tasks_from: ensure_removed.yml
 - name: Configure NTP
   hosts: proxmox
+  gather_facts: false
   tasks:
     - name: Configure chrony
       ansible.builtin.import_role:
@@ -71,7 +78,15 @@
         tasks_from: chrony.yml
 - name: Configure Schedulers
   hosts: proxmox
+  gather_facts: false
   tasks:
     - name: Configure cron
       ansible.builtin.import_role:
         name: cron
+- name: Configure SSH
+  hosts: proxmox
+  gather_facts: false
+  tasks:
+    - name: Configure SSH
+      ansible.builtin.import_role:
+        name: ssh

@@ -1,0 +1,35 @@
+# Authentication
+PermitRootLogin prohibit-password
+PasswordAuthentication no
+PubkeyAuthentication yes
+GSSAPIAuthentication no
+HostbasedAuthentication no
+IgnoreRhosts yes
+LoginGraceTime 60
+MaxAuthTries 4
+MaxSessions 10
+MaxStartups 10:30:60
+PermitEmptyPasswords no
+PermitUserEnvironment no
+UsePAM yes
+AuthorizedKeysFile .ssh/authorized_keys
+AllowUsers root
+
+# Hardening
+DisableForwarding yes
+PrintMotd no
+
+# Logging
+LogLevel VERBOSE
+
+# Cryptography
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
+KexAlgorithms mlkem768x25519-sha256,sntrup761x25519-sha512,curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+
+# SFTP
+Subsystem sftp /usr/lib/openssh/sftp-server
+
+# Keep connections alive
+ClientAliveInterval 15
+ClientAliveCountMax 3
