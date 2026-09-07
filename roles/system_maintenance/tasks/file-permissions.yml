@@ -1,0 +1,60 @@
+---
+# CIS Debian 13 Benchmark 7.1 - System File Permissions.
+# 7.1.13 (Ensure SUID and SGID files are reviewed) is a Manual review recommendation
+# and is covered by the AIDE integrity checking configured in role `aide` (6.3): AIDE
+# records the mode and hash of every binary and reports SUID/SGID or checksum drift
+# on its daily timer.
+- name: Ensure Permissions on `passwd` and `group` Files are Configured
+  ansible.builtin.file:
+    path: /etc/{{ item }}
+    state: file
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - passwd # 7.1.1
+    - passwd- # 7.1.2
+    - group # 7.1.3
+    - group- # 7.1.4
+    - shells # 7.1.9
+- name: Ensure Permissions on `shadow` and `gshadow` Files are Configured
+  ansible.builtin.file:
+    path: /etc/{{ item }}
+    state: file
+    owner: root
+    group: shadow
+    mode: '0640'
+  loop:
+    - shadow # 7.1.5
+    - shadow- # 7.1.6
+    - gshadow # 7.1.7
+    - gshadow- # 7.1.8
+- name: Check for `/etc/security/opasswd` and its Backup
+  ansible.builtin.stat:
+    path: /etc/security/{{ item }}
+  register: system_maintenance_opasswd
+  loop:
+    - opasswd
+    - opasswd.old
+- name: Ensure Permissions on `/etc/security/opasswd` are Configured
+  ansible.builtin.file:
+    path: /etc/security/{{ item.item }}
+    state: file
+    owner: root
+    group: root
+    mode: '0600'
+  loop: '{{ system_maintenance_opasswd.results }}'
+  loop_control:
+    label: '{{ item.item }}'
+  when: item.stat.exists # 7.1.10
+- name: Ensure World Writable Files and Directories are Secured
+  ansible.builtin.script:
+    cmd: world-writable-permissions.sh
+  register: system_maintenance_world_writable
+  changed_when: system_maintenance_world_writable.stdout | trim | length > 0 # 7.1.11
+- name: Ensure No Files or Directories Without an Owner and a Group Exist
+  ansible.builtin.script:
+    cmd: unowned-files-audit.sh
+  register: system_maintenance_unowned
+  changed_when: false
+  failed_when: "'** FAIL **' in system_maintenance_unowned.stdout" # 7.1.12

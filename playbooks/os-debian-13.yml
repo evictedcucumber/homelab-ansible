@@ -123,3 +123,15 @@
     - name: Configure AIDE
       ansible.builtin.import_role:
         name: aide
+- name: Configure System Maintenance
+  hosts: proxmox
+  gather_facts: false
+  tasks:
+    - name: Configure System File Permissions
+      ansible.builtin.import_role:
+        name: system_maintenance
+        tasks_from: file-permissions.yml
+    - name: Configure Local User and Group Settings
+      ansible.builtin.import_role:
+        name: system_maintenance
+        tasks_from: user-group-settings.yml
