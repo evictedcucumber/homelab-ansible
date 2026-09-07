@@ -1,0 +1,22 @@
+---
+# CIS Debian 13 Benchmark 6.3 - Configure Integrity Checking.
+- name: Ensure `aide` and `aide-common` are Installed
+  ansible.builtin.apt:
+    name:
+      - aide
+      - aide-common
+    state: present
+- name: Check for the AIDE Database
+  ansible.builtin.stat:
+    path: /var/lib/aide/aide.db
+  register: aide_database
+- name: Initialize the AIDE Database
+  ansible.builtin.command: aideinit -y -f
+  changed_when: true
+  when: not aide_database.stat.exists
+- name: Ensure `dailyaidecheck.timer` is Unmasked, Enabled and Active
+  ansible.builtin.systemd_service:
+    name: dailyaidecheck.timer
+    masked: false
+    enabled: true
+    state: started

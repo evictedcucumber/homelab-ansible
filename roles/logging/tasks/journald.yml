@@ -1,0 +1,54 @@
+---
+# CIS Debian 13 Benchmark 6.1.1 - Configure journald.
+# journald is the chosen client-side logging mechanism, so the rsyslog section (6.1.2)
+# and journal-remote upload (6.1.1.2.1-6.1.1.2.3) are deliberately not implemented.
+- name: Ensure `rsyslog` is Removed
+  ansible.builtin.apt:
+    name: rsyslog
+    state: absent
+    purge: true
+    autoremove: true
+- name: Ensure `systemd-journald` Service is Unmasked and Active
+  ansible.builtin.systemd_service:
+    name: systemd-journald.service
+    masked: false
+    state: started
+- name: Check for a `tmpfiles.d` `systemd.conf` Override
+  ansible.builtin.stat:
+    path: /etc/tmpfiles.d/systemd.conf
+  register: logging_tmpfiles_override
+- name: Assert journald Log File Access is Not Overridden Less Restrictively
+  ansible.builtin.assert:
+    that:
+      - not logging_tmpfiles_override.stat.exists
+    fail_msg: >-
+      /etc/tmpfiles.d/systemd.conf overrides the distro default; review it and ensure
+      journal files are mode 0640 or more restrictive (CIS 6.1.1.1.2).
+    success_msg: journald log file access uses the compliant Debian default (0640).
+- name: Ensure `/etc/systemd/journald.conf.d` Exists
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+- name: Copy `/etc/systemd/journald.conf.d/60-cis.conf`
+  ansible.builtin.copy:
+    src: journald.conf.d/60-cis.conf
+    dest: /etc/systemd/journald.conf.d/60-cis.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart `systemd-journald` Service
+- name: Gather Package Facts
+  ansible.builtin.package_facts:
+    manager: apt
+- name: Ensure `systemd-journal-remote` Receive Services are Masked and Inactive
+  ansible.builtin.systemd_service:
+    name: '{{ item }}'
+    masked: true
+    state: stopped
+  loop:
+    - systemd-journal-remote.socket
+    - systemd-journal-remote.service
+  when: "'systemd-journal-remote' in ansible_facts.packages"

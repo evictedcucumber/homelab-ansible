@@ -104,3 +104,22 @@
     - name: Configure User Accounts
       ansible.builtin.import_role:
         name: user_accounts
+- name: Configure Logging
+  hosts: proxmox
+  gather_facts: false
+  tasks:
+    - name: Configure journald
+      ansible.builtin.import_role:
+        name: logging
+        tasks_from: journald.yml
+    - name: Configure Logfiles
+      ansible.builtin.import_role:
+        name: logging
+        tasks_from: logfiles.yml
+- name: Configure Integrity Checking
+  hosts: proxmox
+  gather_facts: false
+  tasks:
+    - name: Configure AIDE
+      ansible.builtin.import_role:
+        name: aide
