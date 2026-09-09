@@ -1,0 +1,9 @@
+---
+# roles/login_defs - shadow-suite defaults and user environment
+# (CIS Debian 13 section 5.4). Policy values live in the vendored files:
+#   files/login.defs   - PASS_MAX_DAYS 365, PASS_MIN_DAYS 1, PASS_WARN_AGE 7,
+#                        ENCRYPT_METHOD YESCRYPT, UMASK 027 (5.4.1.1-4, 5.4.3.3)
+#   files/useradd      - INACTIVE=45 (5.4.1.5)
+#   files/50-tmout.sh  - typeset -xr TMOUT=900 (5.4.3.2)
+#   files/60-default_umask.sh, files/root/{profile,bashrc} - umask 027 (5.4.2.6)
+login_defs_manage_root_env: true
