@@ -1,0 +1,37 @@
+---
+# CIS Debian 13 Benchmark 1.1.2 - Configure Filesystem Partitions.
+# Separate partitions (1.1.2.*.1) are provisioned at install time; this role
+# asserts they exist and enforces the hardened mount options (nodev/nosuid/
+# noexec per CIS policy).
+
+- name: Ensure /dev/shm is a hardened tmpfs mount
+  ansible.posix.mount:
+    path: "{{ filesystem_mounts_shm.path }}"
+    src: "{{ filesystem_mounts_shm.src }}"
+    fstype: "{{ filesystem_mounts_shm.fstype }}"
+    opts: "{{ filesystem_mounts_shm.opts }}"
+    state: mounted
+  notify: Reboot
+  tags: [cis, debian_13_cis, "debian_13_cis_1.1.2.2", level1]
+
+- name: Assert host-specific block mounts are defined
+  ansible.builtin.assert:
+    that: filesystem_mounts_block | length > 0
+    fail_msg: >-
+      filesystem_mounts_block is empty - set it in group_vars/host_vars with the
+      device paths for /tmp, /home, /var, /var/tmp, /var/log and /var/log/audit.
+    success_msg: "{{ filesystem_mounts_block | map(attribute='path') | join(', ') }} defined."
+  tags: [cis, debian_13_cis, "debian_13_cis_1.1.2", level1]
+
+- name: Enforce separate partitions and hardened mount options
+  ansible.posix.mount:
+    path: "{{ item.path }}"
+    src: "{{ item.src }}"
+    fstype: "{{ item.fstype | default('ext4') }}"
+    opts: "{{ item.opts | default(filesystem_mounts_policy[item.path] | default('defaults')) }}"
+    state: mounted
+  loop: "{{ filesystem_mounts_block }}"
+  loop_control:
+    label: "{{ item.path }} ({{ item.src }})"
+  notify: Reboot
+  tags: [cis, debian_13_cis, "debian_13_cis_1.1.2", level1, level2]
