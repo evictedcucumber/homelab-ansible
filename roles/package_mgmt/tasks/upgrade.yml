@@ -1,0 +1,12 @@
+---
+# CIS Debian 13 Benchmark 1.2.2.1 - Ensure updates, patches, and additional
+# security software are installed (Manual). Run explicitly via
+#   import_role: {name: package_mgmt, tasks_from: upgrade.yml}
+- name: Update cache and apply available upgrades
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: "{{ package_mgmt_upgrade_type }}"
+    autoremove: true
+    autoclean: true
+    purge: true
+  tags: [cis, debian_13_cis, "debian_13_cis_1.2.2.1", level1]

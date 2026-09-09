@@ -1,0 +1,120 @@
+---
+# CIS Debian 13 Benchmark 1.2 - Package Management.
+
+- name: Discover managed APT source files
+  ansible.builtin.set_fact:
+    package_mgmt_source_files: >-
+      {{ lookup('ansible.builtin.fileglob', role_path ~ '/files/sources/*.sources', wantlist=True)
+         | map('basename') | list }}
+  tags: [cis, debian_13_cis, "debian_13_cis_1.2.1.1", level1]
+
+- name: Remove the legacy monolithic sources.list
+  ansible.builtin.file:
+    path: /etc/apt/sources.list
+    state: absent
+  when: package_mgmt_manage_sources
+  tags: [cis, debian_13_cis, "debian_13_cis_1.2.1.1", level1]
+
+- name: Deploy deb822 source files (Signed-By)
+  ansible.builtin.copy:
+    src: "sources/{{ item }}"
+    dest: "/etc/apt/sources.list.d/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ package_mgmt_source_files }}"
+  when: package_mgmt_manage_sources
+  tags: [cis, debian_13_cis, "debian_13_cis_1.2.1.1", "debian_13_cis_1.2.1.9", level1]
+
+- name: Find existing files in /etc/apt/sources.list.d
+  ansible.builtin.find:
+    paths: /etc/apt/sources.list.d
+    file_type: file
+  register: package_mgmt_existing_sources
+  tags: [cis, debian_13_cis, "debian_13_cis_1.2.1.1", "debian_13_cis_1.2.1.9", level1]
+
+- name: Remove unmanaged source files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ package_mgmt_existing_sources.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  when:
+    - package_mgmt_manage_sources
+    - item.path | basename not in package_mgmt_source_files
+  tags: [cis, debian_13_cis, "debian_13_cis_1.2.1.1", level1]
+
+- name: Secure APT key / credential / source directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ package_mgmt_secure_dirs }}"
+  tags: [cis, debian_13_cis, "debian_13_cis_1.2.1.4", "debian_13_cis_1.2.1.5", "debian_13_cis_1.2.1.7", "debian_13_cis_1.2.1.8", level1]
+
+- name: Find APT gpg keyring files
+  ansible.builtin.find:
+    paths: "{{ package_mgmt_keyring_dirs }}"
+    patterns: ["*gpg"]
+    file_type: file
+  register: package_mgmt_keyrings
+  tags: [cis, debian_13_cis, "debian_13_cis_1.2.1.3", level1]
+
+- name: Restrict APT gpg keyring files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: file
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ package_mgmt_keyrings.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  tags: [cis, debian_13_cis, "debian_13_cis_1.2.1.3", level1]
+
+- name: Find files in /etc/apt/auth.conf.d
+  ansible.builtin.find:
+    paths: /etc/apt/auth.conf.d
+    file_type: file
+  register: package_mgmt_auth_files
+  tags: [cis, debian_13_cis, "debian_13_cis_1.2.1.6", level1]
+
+- name: Restrict /etc/apt/auth.conf.d files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: file
+    owner: root
+    group: root
+    mode: "0640"
+  loop: "{{ package_mgmt_auth_files.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  tags: [cis, debian_13_cis, "debian_13_cis_1.2.1.6", level1]
+
+- name: Restrict files in /etc/apt/sources.list.d
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: file
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ package_mgmt_existing_sources.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  tags: [cis, debian_13_cis, "debian_13_cis_1.2.1.9", level1]
+
+- name: Disable installation of weak dependencies
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/60-no-weak-dependencies
+    content: |
+      // Managed by Ansible (role: package_mgmt) - CIS Debian 13 1.2.1.2.
+      APT::Install-Recommends "0";
+      APT::Install-Suggests "0";
+    owner: root
+    group: root
+    mode: "0644"
+  when: package_mgmt_disable_weak_deps
+  tags: [cis, debian_13_cis, "debian_13_cis_1.2.1.2", level2]
