@@ -1,0 +1,19 @@
+---
+# roles/warning_banners - login warning banners (CIS Debian 13 section 1.6).
+#
+# The banner text must NOT reveal OS/version info: no mingetty escapes
+# (\m \r \s \v) and no reference to the distribution name. Set to local site
+# policy - include the owning organisation and monitoring notice.
+
+warning_banners_text: >-
+  Authorized users only. All activity may be monitored and reported.
+
+# Per-file overrides (default to warning_banners_text).
+warning_banners_motd_text: "{{ warning_banners_text }}"
+warning_banners_issue_text: "{{ warning_banners_text }}"
+warning_banners_issue_net_text: "{{ warning_banners_text }}"
+
+# Manage /etc/motd at all. When false and warning_banners_remove_motd is true
+# the file is removed (also a passing state for 1.6.1 / 1.6.4).
+warning_banners_manage_motd: true
+warning_banners_remove_motd: false

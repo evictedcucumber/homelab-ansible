@@ -1,0 +1,52 @@
+---
+# CIS Debian 13 Benchmark 1.6 - Configure Command Line Warning Banners.
+
+- name: Assert banner text reveals no OS information
+  ansible.builtin.assert:
+    quiet: true
+    that:
+      - not (item | regex_search('\\\\[mrsv]'))
+      - ansible_facts['distribution'] | lower not in (item | lower)
+    fail_msg: >-
+      Banner text must not contain mingetty escapes (\m \r \s \v) or the
+      distribution name: {{ item }}
+  loop:
+    - "{{ warning_banners_motd_text }}"
+    - "{{ warning_banners_issue_text }}"
+    - "{{ warning_banners_issue_net_text }}"
+  tags: [cis, debian_13_cis, "debian_13_cis_1.6.1", "debian_13_cis_1.6.2", "debian_13_cis_1.6.3", level1]
+
+- name: Configure /etc/motd
+  ansible.builtin.copy:
+    dest: /etc/motd
+    content: "{{ warning_banners_motd_text | trim + '\n' }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: warning_banners_manage_motd and not warning_banners_remove_motd
+  tags: [cis, debian_13_cis, "debian_13_cis_1.6.1", "debian_13_cis_1.6.4", level1]
+
+- name: Remove /etc/motd
+  ansible.builtin.file:
+    path: /etc/motd
+    state: absent
+  when: warning_banners_remove_motd
+  tags: [cis, debian_13_cis, "debian_13_cis_1.6.1", "debian_13_cis_1.6.4", level1]
+
+- name: Configure /etc/issue
+  ansible.builtin.copy:
+    dest: /etc/issue
+    content: "{{ warning_banners_issue_text | trim + '\n' }}"
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [cis, debian_13_cis, "debian_13_cis_1.6.2", "debian_13_cis_1.6.5", level1]
+
+- name: Configure /etc/issue.net
+  ansible.builtin.copy:
+    dest: /etc/issue.net
+    content: "{{ warning_banners_issue_net_text | trim + '\n' }}"
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [cis, debian_13_cis, "debian_13_cis_1.6.3", "debian_13_cis_1.6.6", level1]
