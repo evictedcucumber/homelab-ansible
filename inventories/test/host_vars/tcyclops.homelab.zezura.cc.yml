@@ -3,3 +3,12 @@ ansible_ssh_private_key_file: ~/.ssh/ansible-control-node.key
 ansible_ssh_public_key_file: ~/.ssh/ansible-control-node.key.pub
 firewall_management_ipset: [10.0.0.1, 172.16.0.0/12]
 fail2ban_ignore_ip: [127.0.0.1/8, 10.0.0.1, 172.168.0.0/12]
+
+# CIS 1.1.2 - separate partitions provisioned by the installer preseed.
+filesystem_mounts_block:
+  - {path: /tmp, src: /dev/mapper/vg0-tmp, fstype: ext4}
+  - {path: /home, src: /dev/mapper/vg0-home, fstype: ext4}
+  - {path: /var, src: /dev/mapper/vg0-var, fstype: ext4}
+  - {path: /var/tmp, src: /dev/mapper/vg0-vartmp, fstype: ext4}
+  - {path: /var/log, src: /dev/mapper/vg0-varlog, fstype: ext4}
+  - {path: /var/log/audit, src: /dev/mapper/vg0-audit, fstype: ext4}
