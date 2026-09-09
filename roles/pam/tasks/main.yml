@@ -1,131 +1,122 @@
 ---
-- name: Ensure Latest Version of `libpam-runtime` is Installed # noqa: package-latest
-  ansible.builtin.apt:
-    name: libpam-runtime
-    state: latest
+# CIS Debian 13 Benchmark 5.3 - Pluggable Authentication Modules.
+# Debian-specific: uses pam-auth-update profiles under /usr/share/pam-configs/.
+
+- name: Ensure PAM packages are current
+  ansible.builtin.apt: # noqa: package-latest
+    name: "{{ pam_packages }}"
+    state: "{{ 'latest' if pam_update_packages else 'present' }}"
     update_cache: true
-- name: Ensure Latest Version of `libpam-modules` is Installed # noqa: package-latest
-  ansible.builtin.apt:
-    name: libpam-modules
-    state: latest
-    update_cache: true
-- name: Ensure Latest Version of `libpam-pwquality` is Installed # noqa: package-latest
-  ansible.builtin.apt:
-    name: libpam-pwquality
-    state: latest
-    update_cache: true
-- name: Check `pam_unix` Module Status
-  ansible.builtin.command: grep -P -- '\bpam_unix\.so\b' /etc/pam.d/common-auth
-  register: pam_unix_check
-  changed_when: false
-  failed_when: false
-- name: Ensure `pam_unix` Module is Enabled
-  ansible.builtin.command: pam-auth-update --enable unix
-  changed_when: true
-  when: pam_unix_check.rc != 0
-- name: Copy `faillock` PAM Profile
+  tags: [cis, debian_13_cis, "debian_13_cis_5.3.1.1", "debian_13_cis_5.3.1.2", "debian_13_cis_5.3.1.3", level1]
+
+# --- 5.3.2 pam-auth-update profiles ---
+- name: Deploy pam-auth-update profiles
   ansible.builtin.copy:
-    src: pam-configs/faillock
-    dest: /usr/share/pam-configs/faillock
+    src: "pam-configs/{{ item }}"
+    dest: "/usr/share/pam-configs/{{ item }}"
     owner: root
     group: root
-    mode: '0644'
-  register: pam_faillock_profile_copy
-- name: Copy `faillock_notify` PAM Profile
-  ansible.builtin.copy:
-    src: pam-configs/faillock_notify
-    dest: /usr/share/pam-configs/faillock_notify
-    owner: root
-    group: root
-    mode: '0644'
-  register: pam_faillock_notify_profile_copy
-- name: Check `pam_faillock` Module Status
-  ansible.builtin.command: grep -P -- '\bpam_faillock\.so\b' /etc/pam.d/common-auth
-  register: pam_faillock_check
-  changed_when: false
-  failed_when: false
-- name: Ensure `pam_faillock` Module is Enabled
-  ansible.builtin.command: pam-auth-update --enable {{ item }}
+    mode: "0644"
+  loop: [faillock, faillock_notify, pwquality, pwhistory]
+  register: pam_profiles
+  tags: [cis, debian_13_cis, "debian_13_cis_5.3.2.2", "debian_13_cis_5.3.2.3", "debian_13_cis_5.3.2.4", level1]
+
+- name: Check which PAM modules are already enabled
+  ansible.builtin.command: "grep -Pq -- '{{ item.module }}' {{ item.file }}"
   loop:
-    - faillock
-    - faillock_notify
+    - {name: unix, module: '\bpam_unix\.so\b', file: /etc/pam.d/common-auth}
+    - {name: faillock, module: '\bpam_faillock\.so\b', file: /etc/pam.d/common-auth}
+    - {name: pwquality, module: '\bpam_pwquality\.so\b', file: /etc/pam.d/common-password}
+    - {name: pwhistory, module: '\bpam_pwhistory\.so\b', file: /etc/pam.d/common-password}
+  loop_control:
+    label: "{{ item.name }}"
+  register: pam_enabled
+  changed_when: false
+  failed_when: false
+  tags: [cis, debian_13_cis, "debian_13_cis_5.3.2.1", "debian_13_cis_5.3.2.2", "debian_13_cis_5.3.2.3", "debian_13_cis_5.3.2.4", level1]
+
+- name: Enable required PAM modules
+  ansible.builtin.command: "pam-auth-update --enable {{ item }}"
+  loop: [unix, faillock, faillock_notify, pwquality, pwhistory]
   changed_when: true
   when: >-
-    pam_faillock_check.rc != 0
-    or pam_faillock_profile_copy.changed
-    or pam_faillock_notify_profile_copy.changed
-- name: Copy `pwquality` PAM Profile
-  ansible.builtin.copy:
-    src: pam-configs/pwquality
-    dest: /usr/share/pam-configs/pwquality
-    owner: root
-    group: root
-    mode: '0644'
-  register: pam_pwquality_profile_copy
-- name: Check `pam_pwquality` Module Status
-  ansible.builtin.command: grep -P -- '\bpam_pwquality\.so\b' /etc/pam.d/common-password
-  register: pam_pwquality_check
-  changed_when: false
-  failed_when: false
-- name: Ensure `pam_pwquality` Module is Enabled
-  ansible.builtin.command: pam-auth-update --enable pwquality
-  changed_when: true
-  when: pam_pwquality_check.rc != 0 or pam_pwquality_profile_copy.changed
-- name: Copy `pwhistory` PAM Profile
-  ansible.builtin.copy:
-    src: pam-configs/pwhistory
-    dest: /usr/share/pam-configs/pwhistory
-    owner: root
-    group: root
-    mode: '0644'
-  register: pam_pwhistory_profile_copy
-- name: Check `pam_pwhistory` Module Status
-  ansible.builtin.command: grep -P -- '\bpam_pwhistory\.so\b' /etc/pam.d/common-password
-  register: pam_pwhistory_check
-  changed_when: false
-  failed_when: false
-- name: Ensure `pam_pwhistory` Module is Enabled
-  ansible.builtin.command: pam-auth-update --enable pwhistory
-  changed_when: true
-  when: pam_pwhistory_check.rc != 0 or pam_pwhistory_profile_copy.changed
-- name: Copy `/etc/security/faillock.conf`
+    pam_profiles is changed
+    or (pam_enabled.results | selectattr('rc', 'ne', 0) | list | length > 0)
+  tags: [cis, debian_13_cis, "debian_13_cis_5.3.2.1", "debian_13_cis_5.3.2.2", "debian_13_cis_5.3.2.3", "debian_13_cis_5.3.2.4", level1]
+
+# --- 5.3.3 module arguments ---
+- name: Deploy /etc/security/faillock.conf
   ansible.builtin.copy:
     src: faillock.conf
     dest: /etc/security/faillock.conf
     owner: root
     group: root
-    mode: '0644'
-- name: Ensure `/etc/security/pwquality.conf.d` Directory Exists
+    mode: "0644"
+  tags: [cis, debian_13_cis, "debian_13_cis_5.3.3.1.1", "debian_13_cis_5.3.3.1.2", "debian_13_cis_5.3.3.1.3", level1]
+
+- name: Ensure /etc/security/pwquality.conf.d exists
   ansible.builtin.file:
     path: /etc/security/pwquality.conf.d
     state: directory
     owner: root
     group: root
-    mode: '0755'
-- name: Copy `/etc/security/pwquality.conf.d/50-cis.conf`
+    mode: "0755"
+  tags: [cis, debian_13_cis, "debian_13_cis_5.3.3.2", level1]
+
+- name: Deploy pwquality policy
   ansible.builtin.copy:
     src: pwquality.conf.d/50-cis.conf
     dest: /etc/security/pwquality.conf.d/50-cis.conf
     owner: root
     group: root
-    mode: '0644'
-- name: Find Existing Files in `/etc/security/pwquality.conf.d`
+    mode: "0644"
+  tags: [cis, debian_13_cis, "debian_13_cis_5.3.3.2", level1]
+
+- name: Find existing pwquality.conf.d files
   ansible.builtin.find:
     paths: /etc/security/pwquality.conf.d
     file_type: file
-  register: pam_pwquality_confd_existing
-- name: Remove Unmanaged `/etc/security/pwquality.conf.d` Files
+  register: pam_pwquality_confd
+  tags: [cis, debian_13_cis, "debian_13_cis_5.3.3.2", level1]
+
+- name: Remove unmanaged pwquality.conf.d files
   ansible.builtin.file:
-    path: '{{ item.path }}'
+    path: "{{ item.path }}"
     state: absent
-  loop: '{{ pam_pwquality_confd_existing.files }}'
+  loop: "{{ pam_pwquality_confd.files }}"
   loop_control:
-    label: '{{ item.path }}'
+    label: "{{ item.path }}"
   when: item.path | basename != '50-cis.conf'
-- name: Copy `/etc/security/pwhistory.conf`
+  tags: [cis, debian_13_cis, "debian_13_cis_5.3.3.2", level1]
+
+- name: Deploy /etc/security/pwhistory.conf
   ansible.builtin.copy:
     src: pwhistory.conf
     dest: /etc/security/pwhistory.conf
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
+  tags: [cis, debian_13_cis, "debian_13_cis_5.3.3.3.1", "debian_13_cis_5.3.3.3.2", "debian_13_cis_5.3.3.3.3", level1]
+
+# --- 5.3.3.4 pam_unix module arguments ---
+- name: Read /etc/pam.d/common-password
+  ansible.builtin.slurp:
+    src: /etc/pam.d/common-password
+  register: pam_common_password
+  tags: [cis, debian_13_cis, "debian_13_cis_5.3.3.4.1", "debian_13_cis_5.3.3.4.2", "debian_13_cis_5.3.3.4.3", "debian_13_cis_5.3.3.4.4", level1]
+
+- name: Extract the active pam_unix line
+  ansible.builtin.set_fact:
+    pam_unix_line: "{{ pam_common_password.content | b64decode | regex_findall('(?m)^[^#]*\\bpam_unix\\.so\\b.*$') | first | default('') }}"
+  tags: [cis, debian_13_cis, "debian_13_cis_5.3.3.4.1", "debian_13_cis_5.3.3.4.2", "debian_13_cis_5.3.3.4.3", "debian_13_cis_5.3.3.4.4", level1]
+
+- name: Assert pam_unix arguments meet policy
+  ansible.builtin.assert:
+    quiet: true
+    that:
+      - "'nullok' not in pam_unix_line"                          # 5.3.3.4.1
+      - "'remember=' not in pam_unix_line"                       # 5.3.3.4.2
+      - "'yescrypt' in pam_unix_line or 'sha512' in pam_unix_line"  # 5.3.3.4.3
+      - "'use_authtok' in pam_unix_line"                         # 5.3.3.4.4
+    fail_msg: "pam_unix in common-password violates password policy: '{{ pam_unix_line }}'"
+  tags: [cis, debian_13_cis, "debian_13_cis_5.3.3.4.1", "debian_13_cis_5.3.3.4.2", "debian_13_cis_5.3.3.4.3", "debian_13_cis_5.3.3.4.4", level1]
