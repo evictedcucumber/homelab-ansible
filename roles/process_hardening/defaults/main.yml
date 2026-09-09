@@ -1,0 +1,14 @@
+---
+# roles/process_hardening - additional process hardening (CIS Debian 13 1.5).
+# The sysctl-based items (1.5.1-1.5.5, 1.5.8-1.5.10) are owned by the `sysctl`
+# role; this role covers the package and core-dump items.
+
+# 1.5.6 prelink, 1.5.7 Automatic Error Reporting (apport).
+process_hardening_packages_absent: [prelink, apport]
+
+# 1.5.11 - hard limit on core file size for all users.
+process_hardening_core_hard_limit: 0
+
+# 1.5.12 / 1.5.13 - systemd-coredump settings.
+process_hardening_coredump_process_size_max: 0
+process_hardening_coredump_storage: none

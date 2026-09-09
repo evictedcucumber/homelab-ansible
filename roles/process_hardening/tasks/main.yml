@@ -1,0 +1,43 @@
+---
+# CIS Debian 13 Benchmark 1.5 - Configure Additional Process Hardening.
+- name: Ensure prelink and Automatic Error Reporting are not installed
+  ansible.builtin.apt:
+    name: "{{ process_hardening_packages_absent }}"
+    state: absent
+    purge: true
+    autoremove: true
+  tags: [cis, debian_13_cis, "debian_13_cis_1.5.6", "debian_13_cis_1.5.7", level1]
+
+- name: Ensure a hard limit on core file size
+  ansible.builtin.copy:
+    dest: /etc/security/limits.d/60-cis-coredump.conf
+    content: |
+      # Managed by Ansible (role: process_hardening) - CIS Debian 13 1.5.11.
+      * hard core {{ process_hardening_core_hard_limit }}
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [cis, debian_13_cis, "debian_13_cis_1.5.11", level1]
+
+- name: Ensure systemd-coredump drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/systemd/coredump.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: [cis, debian_13_cis, "debian_13_cis_1.5.12", "debian_13_cis_1.5.13", level1]
+
+- name: Configure systemd-coredump to discard core dumps
+  ansible.builtin.copy:
+    dest: /etc/systemd/coredump.conf.d/60-cis.conf
+    content: |
+      # Managed by Ansible (role: process_hardening) - CIS Debian 13 1.5.12 / 1.5.13.
+      [Coredump]
+      ProcessSizeMax={{ process_hardening_coredump_process_size_max }}
+      Storage={{ process_hardening_coredump_storage }}
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd-coredump
+  tags: [cis, debian_13_cis, "debian_13_cis_1.5.12", "debian_13_cis_1.5.13", level1]
