@@ -1,17 +1,24 @@
 ---
-- name: Ensure /etc/sysctl.d Exists
+# CIS Debian 13 Benchmark 1.5 (process hardening) and 3.3 (network parameters).
+- name: Ensure sysctl drop-in directories exist
   ansible.builtin.file:
-    path: /etc/sysctl.d
+    path: "{{ item }}"
     state: directory
-    mode: '0644'
     owner: root
     group: root
-- name: Set Sysctl Config
+    mode: "0755"
+  loop: "{{ sysctl_hardening_files.values() | map('dirname') | unique | list }}"
+  tags: [cis, debian_13_cis, sysctl]
+
+- name: Apply hardening kernel parameters
   ansible.posix.sysctl:
-    name: '{{ item.key }}'
-    value: '{{ item.value | string }}'
-    sysctl_file: '{{ sysctl_files[item.key | split(".") | first] }}'
+    name: "{{ item.key }}"
+    value: "{{ item.value | string }}"
+    sysctl_file: "{{ sysctl_hardening_files[item.key | split('.') | first] }}"
     sysctl_set: true
     state: present
     reload: true
-  loop: '{{ sysctl_config | flatten_dict | dict2items }}'
+  loop: "{{ sysctl_hardening | flatten_dict | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  tags: [cis, debian_13_cis, "debian_13_cis_1.3.1.4", "debian_13_cis_1.5", "debian_13_cis_3.3", sysctl]

@@ -1,0 +1,56 @@
+---
+# roles/sysctl - apply hardening kernel parameters.
+#
+# Defaults implement the CIS Debian Linux 13 Benchmark v1.0.0 parameters from
+# sections 1.5 (process hardening) and 3.3 (network parameters). The nested
+# mapping is flattened to dotted `sysctl` keys at run time; the top-level key
+# (`fs` / `kernel` / `net`) selects the drop-in file.
+
+sysctl_hardening_files:
+  fs: /etc/sysctl.d/20-fs.conf
+  kernel: /etc/sysctl.d/20-kernel.conf
+  net: /etc/sysctl.d/20-network.conf
+
+sysctl_hardening:
+  net:
+    ipv4:
+      ip_forward: 0
+      conf:
+        all:
+          forwarding: 0
+          send_redirects: 0
+          accept_redirects: 0
+          secure_redirects: 0
+          rp_filter: 1
+          accept_source_route: 0
+          log_martians: 1
+        default:
+          forwarding: 0
+          send_redirects: 0
+          accept_redirects: 0
+          secure_redirects: 0
+          rp_filter: 1
+          accept_source_route: 0
+          log_martians: 1
+      icmp_ignore_bogus_error_responses: 1
+      icmp_echo_ignore_broadcasts: 1
+      tcp_syncookies: 1
+    ipv6:
+      conf:
+        lo:
+          disable_ipv6: 1
+        default:
+          disable_ipv6: 1
+        all:
+          disable_ipv6: 1
+  fs:
+    protected_hardlinks: 1
+    protected_symlinks: 1
+    suid_dumpable: 0
+  kernel:
+    yama:
+      ptrace_scope: 3
+    dmesg_restrict: 1
+    kptr_restrict: 2
+    randomize_va_space: 2
+    apparmor_restrict_unprivileged_unconfined: 1
