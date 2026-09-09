@@ -1,0 +1,92 @@
+---
+# CIS Debian 13 Benchmark 5.1 - Configure SSH Server.
+- name: Load OS-specific variables
+  ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', _ff) }}"
+  vars:
+    _ff:
+      files:
+        - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
+        - "{{ ansible_facts['os_family'] }}.yml"
+        - main.yml
+      paths: [vars]
+  tags: [always]
+
+- name: Ensure the Ansible control-node key is in root's authorized_keys
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ lookup('file', ansible_ssh_public_key_file) }}"
+    state: present
+  when: ssh_server_authorize_control_key
+  tags: [ssh]
+
+- name: Deploy hardened sshd_config
+  ansible.builtin.template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: "0600"
+    validate: "{{ ssh_server_validate_cmd }}"
+    backup: true
+  notify: Restart sshd
+  tags: [cis, debian_13_cis, "debian_13_cis_5.1", "debian_13_cis_5.1.4", "debian_13_cis_5.1.5", level1]
+
+- name: Find drop-in files in /etc/ssh/sshd_config.d
+  ansible.builtin.find:
+    paths: /etc/ssh/sshd_config.d
+    patterns: ["*.conf"]
+    file_type: file
+  register: ssh_server_dropins
+  tags: [cis, debian_13_cis, "debian_13_cis_5.1.1", level1]
+
+- name: Restrict /etc/ssh/sshd_config.d drop-ins
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: file
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ ssh_server_dropins.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  tags: [cis, debian_13_cis, "debian_13_cis_5.1.1", level1]
+
+- name: Find SSH private host keys
+  ansible.builtin.find:
+    paths: /etc/ssh
+    patterns: ["ssh_host_*_key"]
+    file_type: file
+  register: ssh_server_priv_keys
+  tags: [cis, debian_13_cis, "debian_13_cis_5.1.2", level1]
+
+- name: Restrict SSH private host keys
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: file
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ ssh_server_priv_keys.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  tags: [cis, debian_13_cis, "debian_13_cis_5.1.2", level1]
+
+- name: Find SSH public host keys
+  ansible.builtin.find:
+    paths: /etc/ssh
+    patterns: ["ssh_host_*_key.pub"]
+    file_type: file
+  register: ssh_server_pub_keys
+  tags: [cis, debian_13_cis, "debian_13_cis_5.1.3", level1]
+
+- name: Restrict SSH public host keys
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: file
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ ssh_server_pub_keys.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  tags: [cis, debian_13_cis, "debian_13_cis_5.1.3", level1]

@@ -1,0 +1,5 @@
+---
+# Debian / Ubuntu.
+ssh_server_service: ssh
+ssh_server_sftp_subsystem: "sftp /usr/lib/openssh/sftp-server"
+ssh_server_validate_cmd: "/usr/sbin/sshd -t -f %s"
