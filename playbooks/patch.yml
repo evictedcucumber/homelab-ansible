@@ -1,0 +1,12 @@
+---
+# Whole-site OS patching. Runs every per-OS `patch-<os>-<ver>.yml` playbook;
+# each targets its own OS group, so this patches every host in the inventory in
+# one run. Kept separate from site.yml so the baseline never upgrades packages.
+#
+#   ansible-playbook -i inventories/test playbooks/patch.yml
+#   ansible-playbook -i inventories/test playbooks/patch.yml -e patch_reboot=true
+- name: Import Debian 13 patching
+  ansible.builtin.import_playbook: patch-debian-13.yml
+# Add further OSes here, e.g.:
+# - name: Import Ubuntu 24.04 patching
+#   ansible.builtin.import_playbook: patch-ubuntu-24.04.yml

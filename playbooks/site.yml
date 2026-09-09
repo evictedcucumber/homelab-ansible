@@ -1,0 +1,12 @@
+---
+# Whole-site hardening baseline. Runs every per-OS `os-<os>-<ver>.yml` playbook;
+# each targets its own OS group (e.g. `debian_13`), so this converges every host
+# in the inventory to its CIS baseline in one run. Config only - it does not
+# patch the OS (see patch.yml).
+#
+#   ansible-playbook -i inventories/test playbooks/site.yml
+- name: Import Debian 13 baseline
+  ansible.builtin.import_playbook: os-debian-13.yml
+# Add further OSes here, e.g.:
+# - name: Import Ubuntu 24.04 baseline
+#   ansible.builtin.import_playbook: os-ubuntu-24.04.yml
