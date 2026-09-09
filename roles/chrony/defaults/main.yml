@@ -15,7 +15,6 @@ chrony_directives:
   - makestep 1.0 3
   - driftfile /var/lib/chrony/drift
   - rtcsync
-
 # Unprivileged user chronyd drops to (2.3.3.2).
 chrony_user: _chrony
 

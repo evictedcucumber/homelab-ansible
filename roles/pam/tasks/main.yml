@@ -3,7 +3,7 @@
 # Debian-specific: uses pam-auth-update profiles under /usr/share/pam-configs/.
 
 - name: Ensure PAM packages are current
-  ansible.builtin.apt: # noqa: package-latest
+  ansible.builtin.apt:  # noqa: package-latest
     name: "{{ pam_packages }}"
     state: "{{ 'latest' if pam_update_packages else 'present' }}"
     update_cache: true
@@ -110,13 +110,14 @@
     pam_unix_line: "{{ pam_common_password.content | b64decode | regex_findall('(?m)^[^#]*\\bpam_unix\\.so\\b.*$') | first | default('') }}"
   tags: [cis, debian_13_cis, "debian_13_cis_5.3.3.4.1", "debian_13_cis_5.3.3.4.2", "debian_13_cis_5.3.3.4.3", "debian_13_cis_5.3.3.4.4", level1]
 
+# that: 5.3.3.4.1 no nullok / .2 no remember= / .3 yescrypt|sha512 / .4 use_authtok
 - name: Assert pam_unix arguments meet policy
   ansible.builtin.assert:
     quiet: true
     that:
-      - "'nullok' not in pam_unix_line"                          # 5.3.3.4.1
-      - "'remember=' not in pam_unix_line"                       # 5.3.3.4.2
-      - "'yescrypt' in pam_unix_line or 'sha512' in pam_unix_line"  # 5.3.3.4.3
-      - "'use_authtok' in pam_unix_line"                         # 5.3.3.4.4
+      - "'nullok' not in pam_unix_line"
+      - "'remember=' not in pam_unix_line"
+      - "'yescrypt' in pam_unix_line or 'sha512' in pam_unix_line"
+      - "'use_authtok' in pam_unix_line"
     fail_msg: "pam_unix in common-password violates password policy: '{{ pam_unix_line }}'"
   tags: [cis, debian_13_cis, "debian_13_cis_5.3.3.4.1", "debian_13_cis_5.3.3.4.2", "debian_13_cis_5.3.3.4.3", "debian_13_cis_5.3.3.4.4", level1]

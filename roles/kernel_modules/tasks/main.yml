@@ -18,12 +18,9 @@
   tags: [cis, debian_13_cis, "debian_13_cis_1.1.1", "debian_13_cis_3.2", level1]
 
 - name: Deny loading of unrequired kernel modules
-  ansible.builtin.copy:
+  ansible.builtin.template:
+    src: blacklist.conf.j2
     dest: "{{ kernel_modules_modprobe_dir }}/{{ kernel_modules_confd_prefix }}{{ item.name }}.conf"
-    content: |
-      # Managed by Ansible (role: kernel_modules) - CIS Debian 13 {{ item.cis }}.
-      install {{ item.name }} /bin/false
-      blacklist {{ item.name }}
     owner: root
     group: root
     mode: "0644"

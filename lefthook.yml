@@ -1,6 +1,13 @@
 ---
 pre-commit:
   commands:
+    format-yaml:
+      priority: 1
+      glob: '**/*.yml'
+      exclude:
+        - '**/vault.yml'
+      run: yamlfix {staged_files}
+      stage_fixed: true
     validate-ansible:
       glob: '**/*.yml'
       run: ansible-config validate -t all

@@ -33,11 +33,8 @@
 # numbered files, so it is emptied and 01-initialize.rules owns `-D` + buffers.
 - name: Neutralise the distribution's default audit.rules
   ansible.builtin.copy:
+    src: audit.rules
     dest: /etc/audit/rules.d/audit.rules
-    content: |
-      # Managed by Ansible (role: auditd). Rules live in the NN-*.rules files in
-      # this directory; this stock file is emptied so its trailing `-D` does not
-      # wipe them.
     owner: root
     group: root
     mode: "0640"

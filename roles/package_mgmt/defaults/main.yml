@@ -20,6 +20,5 @@ package_mgmt_secure_dirs:
 package_mgmt_keyring_dirs:
   - /usr/share/keyrings
   - /etc/apt/trusted.gpg.d
-
 # 1.2.2.1 - run a safe upgrade (only via tasks_from: upgrade.yml).
 package_mgmt_upgrade_type: safe

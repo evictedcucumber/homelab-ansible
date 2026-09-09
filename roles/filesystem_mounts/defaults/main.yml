@@ -23,7 +23,6 @@ filesystem_mounts_shm:
   src: tmpfs
   fstype: tmpfs
   opts: "{{ filesystem_mounts_policy['/dev/shm'] }}"
-
 # Host-provided block-device mounts (CIS 1.1.2.1 / 1.1.2.3-7). Each entry:
 #   {path: /var, src: /dev/mapper/vg0-var, fstype: ext4, opts: <optional>}
 filesystem_mounts_block: []

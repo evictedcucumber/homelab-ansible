@@ -17,6 +17,7 @@
         ansible-lint
         lefthook
         python3
+        yamlfix
       ];
     };
   };

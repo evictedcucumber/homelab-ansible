@@ -7,7 +7,7 @@
 
 # sshd_config directives rendered as "key value", one per line.
 ssh_server_config:
-  PermitRootLogin: prohibit-password        # 5.1.21 (deviation)
+  PermitRootLogin: prohibit-password  # 5.1.21 (deviation)
   PasswordAuthentication: "no"
   PubkeyAuthentication: "yes"
   PermitEmptyPasswords: "no"                # 5.1.20
@@ -48,7 +48,6 @@ ssh_server_kex_algorithms:
 ssh_server_macs:
   - hmac-sha2-512-etm@openssh.com
   - hmac-sha2-256-etm@openssh.com
-
 # 5.1.4 - at least one of Allow/Deny Users/Groups.
 ssh_server_allow_users: [root]
 ssh_server_allow_groups: []

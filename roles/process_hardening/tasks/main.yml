@@ -9,11 +9,9 @@
   tags: [cis, debian_13_cis, "debian_13_cis_1.5.6", "debian_13_cis_1.5.7", level1]
 
 - name: Ensure a hard limit on core file size
-  ansible.builtin.copy:
+  ansible.builtin.template:
+    src: coredump-limits.conf.j2
     dest: /etc/security/limits.d/60-cis-coredump.conf
-    content: |
-      # Managed by Ansible (role: process_hardening) - CIS Debian 13 1.5.11.
-      * hard core {{ process_hardening_core_hard_limit }}
     owner: root
     group: root
     mode: "0644"
@@ -29,13 +27,9 @@
   tags: [cis, debian_13_cis, "debian_13_cis_1.5.12", "debian_13_cis_1.5.13", level1]
 
 - name: Configure systemd-coredump to discard core dumps
-  ansible.builtin.copy:
+  ansible.builtin.template:
+    src: coredump.conf.j2
     dest: /etc/systemd/coredump.conf.d/60-cis.conf
-    content: |
-      # Managed by Ansible (role: process_hardening) - CIS Debian 13 1.5.12 / 1.5.13.
-      [Coredump]
-      ProcessSizeMax={{ process_hardening_coredump_process_size_max }}
-      Storage={{ process_hardening_coredump_storage }}
     owner: root
     group: root
     mode: "0644"

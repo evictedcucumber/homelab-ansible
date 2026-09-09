@@ -1,0 +1,10 @@
+# yamlfix - tuned so it does not corrupt Ansible/Jinja templating.
+#   preserve_quotes  : keep "yes"/"no"/"0644"/regex quoting exactly as written
+#                      (bare yes/no become YAML 1.1 booleans -> sshd_config breaks)
+#   sequence_style   : leave inline [a, b] vs block lists alone (hand-tuned tags)
+#   line_length 160  : matches ansible-lint's yaml[line-length]; stop mid-Jinja wraps
+preserve_quotes = true
+sequence_style = "keep_style"
+line_length = 160
+whitelines = 1
+comments_whitelines = 1
