@@ -1,0 +1,19 @@
+---
+# roles/job_schedulers - cron / at hardening (CIS Debian 13 section 2.4).
+
+# Purge `at` rather than configure it (CIS 2.4.2 may be skipped when at is
+# absent). Set false to keep and harden at instead.
+job_schedulers_remove_at: true
+
+# Users permitted to use crontab (one per line in /etc/cron.allow). root is
+# always allowed regardless.
+job_schedulers_cron_allow_users: []
+
+# System cron directories locked to 0700 root:root (2.4.1.3 - 2.4.1.8).
+job_schedulers_cron_dirs:
+  - /etc/cron.hourly
+  - /etc/cron.daily
+  - /etc/cron.weekly
+  - /etc/cron.monthly
+  - /etc/cron.yearly
+  - /etc/cron.d

@@ -1,0 +1,100 @@
+---
+# CIS Debian 13 Benchmark 2.4 - Job Schedulers (cron / at).
+- name: Load OS-specific variables
+  ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', _ff) }}"
+  vars:
+    _ff:
+      files:
+        - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
+        - "{{ ansible_facts['os_family'] }}.yml"
+        - main.yml
+      paths: [vars]
+  tags: [always]
+
+- name: Ensure at is purged
+  ansible.builtin.apt:
+    name: at
+    state: absent
+    purge: true
+    autoremove: true
+  when: job_schedulers_remove_at
+  tags: [cis, debian_13_cis, "debian_13_cis_2.4.2.1", level1]
+
+- name: Ensure cron is installed
+  ansible.builtin.package:
+    name: "{{ job_schedulers_cron_package }}"
+    state: present
+  tags: [cis, debian_13_cis, "debian_13_cis_2.4.1.1", level1]
+
+- name: Ensure cron daemon is unmasked, enabled and active
+  ansible.builtin.systemd_service:
+    name: "{{ job_schedulers_cron_service }}"
+    masked: false
+    enabled: true
+    state: started
+  tags: [cis, debian_13_cis, "debian_13_cis_2.4.1.1", level1]
+
+- name: Ensure access to /etc/crontab is configured
+  ansible.builtin.file:
+    path: /etc/crontab
+    state: file
+    owner: root
+    group: root
+    mode: "0600"
+  tags: [cis, debian_13_cis, "debian_13_cis_2.4.1.2", level1]
+
+- name: Ensure access to system cron directories is configured
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  loop: "{{ job_schedulers_cron_dirs }}"
+  tags:
+    - cis
+    - debian_13_cis
+    - "debian_13_cis_2.4.1.3"
+    - "debian_13_cis_2.4.1.4"
+    - "debian_13_cis_2.4.1.5"
+    - "debian_13_cis_2.4.1.6"
+    - "debian_13_cis_2.4.1.7"
+    - "debian_13_cis_2.4.1.8"
+    - level1
+
+- name: Look up the crontab group
+  ansible.builtin.getent:
+    database: group
+    key: crontab
+    fail_key: false
+  tags: [cis, debian_13_cis, "debian_13_cis_2.4.1.9", level1]
+
+- name: Set the cron.allow / cron.deny group owner
+  ansible.builtin.set_fact:
+    job_schedulers_cron_group: "{{ 'crontab' if ansible_facts.getent_group.get('crontab') else 'root' }}"
+  tags: [cis, debian_13_cis, "debian_13_cis_2.4.1.9", level1]
+
+- name: Ensure /etc/cron.allow exists and is restricted
+  ansible.builtin.copy:
+    dest: /etc/cron.allow
+    content: "{{ (job_schedulers_cron_allow_users | join('\n') + '\n') if job_schedulers_cron_allow_users else '' }}"
+    owner: root
+    group: "{{ job_schedulers_cron_group }}"
+    mode: "0640"
+  tags: [cis, debian_13_cis, "debian_13_cis_2.4.1.9", level1]
+
+- name: Check for /etc/cron.deny
+  ansible.builtin.stat:
+    path: /etc/cron.deny
+  register: job_schedulers_cron_deny
+  tags: [cis, debian_13_cis, "debian_13_cis_2.4.1.9", level1]
+
+- name: Ensure /etc/cron.deny is restricted when present
+  ansible.builtin.file:
+    path: /etc/cron.deny
+    state: file
+    owner: root
+    group: "{{ job_schedulers_cron_group }}"
+    mode: "0640"
+  when: job_schedulers_cron_deny.stat.exists
+  tags: [cis, debian_13_cis, "debian_13_cis_2.4.1.9", level1]
