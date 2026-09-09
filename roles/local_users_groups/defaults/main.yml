@@ -1,0 +1,4 @@
+---
+# roles/local_users_groups - CIS Debian 13 section 7.2 (+ 5.4.1.6 / 5.4.2.1-3 audits).
+# All checks are audit gates - they fail the converge on drift rather than
+# silently remediating (except 7.2.9 / 7.2.10 which actively fix).
