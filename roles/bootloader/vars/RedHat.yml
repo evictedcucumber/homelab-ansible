@@ -1,0 +1,7 @@
+---
+# EL - grub2 layout differs; provided for portability, not CIS-verified here.
+bootloader_grub_cfg: /boot/grub2/grub.cfg
+bootloader_default_grubd_dir: /etc/default/grub.d
+bootloader_scripts_dir: /etc/grub.d
+bootloader_linux_script: /etc/grub.d/10_linux
+bootloader_update_command: grub2-mkconfig -o /boot/grub2/grub.cfg

@@ -1,0 +1,7 @@
+{{ ansible_managed | comment }}
+{% if bootloader_cmdline_default_extra %}
+GRUB_CMDLINE_LINUX_DEFAULT="${GRUB_CMDLINE_LINUX_DEFAULT:+$GRUB_CMDLINE_LINUX_DEFAULT }{{ bootloader_cmdline_default_extra | join(' ') }}"
+{% endif %}
+{% if bootloader_cmdline_extra %}
+GRUB_CMDLINE_LINUX="${GRUB_CMDLINE_LINUX:+$GRUB_CMDLINE_LINUX }{{ bootloader_cmdline_extra | join(' ') }}"
+{% endif %}
