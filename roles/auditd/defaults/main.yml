@@ -1,0 +1,83 @@
+---
+# roles/auditd - Linux Auditing System (CIS Debian 13 section 6.2, all Level 2).
+
+auditd_packages: [auditd, audispd-plugins]
+auditd_service: auditd
+
+# 6.2.1.3 / 6.2.1.4 - kernel command line. Written to an /etc/default/grub.d
+# drop-in and applied with the bootloader's update command.
+auditd_grub_args: "audit=1 audit_backlog_limit=8192"
+auditd_grub_update_command: update-grub
+
+# 6.2.2 Data retention (/etc/audit/auditd.conf).
+auditd_max_log_file: 8                 # MB (6.2.2.1)
+auditd_max_log_file_action: keep_logs  # 6.2.2.2
+auditd_disk_full_action: halt          # 6.2.2.3  (halt|single) - halts on a full audit disk
+auditd_disk_error_action: halt         # 6.2.2.3  (syslog|single|halt)
+auditd_space_left_action: email        # 6.2.2.4
+auditd_admin_space_left_action: single # 6.2.2.4
+auditd_action_mail_acct: root          # 6.2.2.4
+auditd_num_logs: 5
+
+# 6.2.3 rules.
+auditd_uid_min: 1000
+# 6.2.3.35 - `01-initialize.rules`: continue past errors (`-c`), delete existing
+# rules first (`-D`), and set the runtime buffer / failure mode. These match the
+# Debian defaults so neutralising the stock rules.d/audit.rules loses nothing.
+auditd_load_regardless_of_errors: true
+auditd_buffer_size: 8192
+auditd_backlog_wait_time: 60000
+auditd_failure_mode: 1                  # 0 silent | 1 printk | 2 panic
+
+# 6.2.3 watch rules. A rule whose target is absent makes `augenrules --load`
+# fail, so the role stats each path and only emits the ones that exist.
+# Each entry: {path, key, kind: file|dir, perm: wa|x}
+auditd_watches:
+  - {path: /etc/localtime, key: time-change, kind: file, perm: wa}
+  - {path: /etc/issue, key: system-locale, kind: file, perm: wa}
+  - {path: /etc/issue.net, key: system-locale, kind: file, perm: wa}
+  - {path: /etc/hostname, key: system-locale, kind: file, perm: wa}
+  - {path: /etc/hosts, key: system-locale, kind: file, perm: wa}
+  - {path: /etc/nsswitch.conf, key: system-locale, kind: file, perm: wa}
+  - {path: /etc/network/interfaces, key: system-locale, kind: file, perm: wa}
+  - {path: /etc/network/interfaces.d, key: system-locale, kind: dir, perm: wa}
+  - {path: /etc/netplan, key: system-locale, kind: dir, perm: wa}
+  - {path: /etc/NetworkManager, key: system-locale, kind: dir, perm: wa}
+  - {path: /etc/apparmor, key: MAC-policy, kind: dir, perm: wa}
+  - {path: /etc/apparmor.d, key: MAC-policy, kind: dir, perm: wa}
+  - {path: /etc/sudoers, key: scope, kind: file, perm: wa}
+  - {path: /etc/sudoers.d, key: scope, kind: dir, perm: wa}
+  - {path: /var/log/sudo.log, key: sudo_log_file, kind: file, perm: wa}
+  - {path: /etc/group, key: identity, kind: file, perm: wa}
+  - {path: /etc/passwd, key: identity, kind: file, perm: wa}
+  - {path: /etc/gshadow, key: identity, kind: file, perm: wa}
+  - {path: /etc/shadow, key: identity, kind: file, perm: wa}
+  - {path: /etc/security/opasswd, key: identity, kind: file, perm: wa}
+  - {path: /etc/pam.conf, key: identity, kind: file, perm: wa}
+  - {path: /etc/pam.d, key: identity, kind: dir, perm: wa}
+  - {path: /var/run/utmp, key: session, kind: file, perm: wa}
+  - {path: /var/log/wtmp, key: session, kind: file, perm: wa}
+  - {path: /var/log/btmp, key: session, kind: file, perm: wa}
+  - {path: /var/log/lastlog, key: logins, kind: file, perm: wa}
+  - {path: /var/run/faillock, key: logins, kind: dir, perm: wa}
+  - {path: /usr/bin/chcon, key: perm_chng, kind: file, perm: x}
+  - {path: /usr/bin/setfacl, key: perm_chng, kind: file, perm: x}
+  - {path: /usr/bin/chacl, key: perm_chng, kind: file, perm: x}
+  - {path: /usr/sbin/usermod, key: usermod, kind: file, perm: x}
+  - {path: /usr/bin/kmod, key: kernel_modules, kind: file, perm: x}
+# 6.2.3.36 - `-e` finalize mode. 2 = fully immutable (CIS). Default 1 here so
+# the later Proxmox install can still add rules without a reboot; set to 2 for
+# full 6.2.3.36 compliance.
+auditd_finalize_mode: 1
+
+# 6.2.4 access to audit artefacts.
+auditd_log_mode: "0640"
+auditd_log_dir_mode: "0750"
+auditd_conf_mode: "0640"
+auditd_tools:
+  - /sbin/auditctl
+  - /sbin/aureport
+  - /sbin/ausearch
+  - /sbin/autrace
+  - /sbin/auditd
+  - /sbin/augenrules

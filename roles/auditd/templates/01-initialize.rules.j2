@@ -1,0 +1,10 @@
+## {{ ansible_managed }}
+## CIS Debian 13 Benchmark 6.2.3.35 - runs first (augenrules concatenates the
+## rules.d/*.rules files in C-locale order).
+{% if auditd_load_regardless_of_errors %}
+-c
+{% endif %}
+-D
+-b {{ auditd_buffer_size }}
+--backlog_wait_time {{ auditd_backlog_wait_time }}
+-f {{ auditd_failure_mode }}

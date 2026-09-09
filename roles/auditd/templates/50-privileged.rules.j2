@@ -1,0 +1,6 @@
+## {{ ansible_managed }}
+## CIS Debian 13 Benchmark 6.2.3.10 - use of privileged (SUID/SGID) commands.
+## Generated from a live scan of exec- and suid-capable filesystems.
+{% for cmd in auditd_privileged_commands | unique | sort %}
+-a always,exit -F arch=b64 -S all -F path={{ cmd }} -F perm=x -F auid>={{ auditd_uid_min }} -F auid!=unset -k privileged
+{% endfor %}

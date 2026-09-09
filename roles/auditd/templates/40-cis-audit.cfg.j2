@@ -1,0 +1,3 @@
+{{ ansible_managed | comment }}
+# CIS Debian 13 Benchmark 6.2.1.3 / 6.2.1.4.
+GRUB_CMDLINE_LINUX="${GRUB_CMDLINE_LINUX:+$GRUB_CMDLINE_LINUX }{{ auditd_grub_args }}"
