@@ -1,9 +1,0 @@
----
-- name: Ensure Access to /etc/apt/auth.conf.d
-  ansible.builtin.file:
-    path: /etc/apt/auth.conf.d
-    state: directory
-    owner: root
-    group: root
-    mode: '0640'
-    recurse: true

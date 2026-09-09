@@ -1,6 +1,0 @@
----
-- name: Ensure Installed
-  ansible.builtin.apt:
-    name: '{{ item }}'
-    state: present
-  loop: '{{ apt_ensure_installed }}'
