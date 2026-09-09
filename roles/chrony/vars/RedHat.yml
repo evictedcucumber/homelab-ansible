@@ -1,0 +1,5 @@
+---
+chrony_package: chrony
+chrony_service: chronyd
+chrony_config_dir: /etc/chrony.d
+chrony_config_file: /etc/chrony.conf

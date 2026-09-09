@@ -1,0 +1,72 @@
+---
+# CIS Debian 13 Benchmark 2.3 - Configure Time Synchronization (chrony).
+- name: Load OS-specific variables
+  ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', _ff) }}"
+  vars:
+    _ff:
+      files:
+        - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
+        - "{{ ansible_facts['os_family'] }}.yml"
+        - main.yml
+      paths: [vars]
+  tags: [always]
+
+- name: Ensure conflicting time-sync packages are removed
+  ansible.builtin.apt:
+    name: "{{ chrony_conflicting_packages }}"
+    state: absent
+    purge: true
+    autoremove: true
+  tags: [cis, debian_13_cis, "debian_13_cis_2.3.1.1", level1]
+
+- name: Ensure chrony is installed
+  ansible.builtin.apt:
+    name: "{{ chrony_package }}"
+    state: present
+  tags: [cis, debian_13_cis, "debian_13_cis_2.3.3.1", level1]
+
+- name: Ensure chrony configuration directory exists
+  ansible.builtin.file:
+    path: "{{ chrony_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: [cis, debian_13_cis, "debian_13_cis_2.3.3.1", level1]
+
+- name: Deploy chrony configuration
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: "{{ chrony_config_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart chrony
+  tags: [cis, debian_13_cis, "debian_13_cis_2.3.3.1", "debian_13_cis_2.3.3.2", level1]
+
+- name: Find stray files in the chrony configuration directory
+  ansible.builtin.find:
+    paths: "{{ chrony_config_dir }}"
+    excludes: ["{{ chrony_config_file | basename }}"]
+    hidden: true
+    file_type: any
+  register: chrony_stray
+  tags: [cis, debian_13_cis, "debian_13_cis_2.3.3.1", level1]
+
+- name: Remove stray files in the chrony configuration directory
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ chrony_stray.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  notify: Restart chrony
+  tags: [cis, debian_13_cis, "debian_13_cis_2.3.3.1", level1]
+
+- name: Ensure chrony service is unmasked, enabled and running
+  ansible.builtin.systemd_service:
+    name: "{{ chrony_service }}"
+    masked: false
+    enabled: true
+    state: started
+  tags: [cis, debian_13_cis, "debian_13_cis_2.3.3.3", level1]

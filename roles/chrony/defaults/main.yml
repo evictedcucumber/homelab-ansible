@@ -1,0 +1,24 @@
+---
+# roles/chrony - time synchronisation via chrony (CIS Debian 13 section 2.3).
+#
+# Covers 2.3.1.1 (single time daemon), 2.3.3.1 (authorized timeserver),
+# 2.3.3.2 (runs as _chrony), 2.3.3.3 (enabled and running).
+
+# `pool` / `server` lines (without the directive keyword). Override per site.
+chrony_pools:
+  - 2.za.pool.ntp.org iburst
+chrony_servers:
+  - time.cloudflare.com iburst NTS
+
+# Extra directives rendered verbatim, one per line.
+chrony_directives:
+  - makestep 1.0 3
+  - driftfile /var/lib/chrony/drift
+  - rtcsync
+
+# Unprivileged user chronyd drops to (2.3.3.2).
+chrony_user: _chrony
+
+# Time-sync services that must not run alongside chrony (2.3.1.1).
+chrony_conflicting_packages:
+  - systemd-timesyncd

@@ -1,0 +1,11 @@
+{{ ansible_managed | comment }}
+{% for pool in chrony_pools %}
+pool {{ pool }}
+{% endfor %}
+{% for server in chrony_servers %}
+server {{ server }}
+{% endfor %}
+{% for directive in chrony_directives %}
+{{ directive }}
+{% endfor %}
+user {{ chrony_user }}
