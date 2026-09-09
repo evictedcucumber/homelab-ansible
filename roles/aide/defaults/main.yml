@@ -1,0 +1,12 @@
+---
+# roles/aide - filesystem integrity checking (CIS Debian 13 section 6.3).
+aide_packages: [aide, aide-common]
+aide_database_path: /var/lib/aide/aide.db
+aide_check_timer: dailyaidecheck.timer
+aide_confd_dir: /etc/aide/aide.conf.d
+
+# 6.3.3 (L2) - add the audit tools to the AIDE selection with sha512.
+aide_protect_audit_tools: true
+aide_audit_tools_dir: /usr/sbin
+aide_audit_tools: [auditctl, auditd, ausearch, aureport, augenrules]
+aide_audit_tools_selection: "p+i+n+u+g+s+b+acl+xattrs+sha512"

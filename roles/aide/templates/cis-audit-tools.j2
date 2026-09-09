@@ -1,0 +1,5 @@
+# {{ ansible_managed }}
+# CIS Debian 13 Benchmark 6.3.3 - protect the integrity of audit tools.
+{% for tool in aide_audit_tools %}
+{{ aide_audit_tools_dir }}/{{ tool }} {{ aide_audit_tools_selection }}
+{% endfor %}
