@@ -1,0 +1,4 @@
+---
+# roles/journald - systemd-journald as the client-side logger (CIS Debian 13 6.1.1).
+# rsyslog (6.1.2) is treated as mutually exclusive and removed.
+journald_conflicting_packages: [rsyslog]
