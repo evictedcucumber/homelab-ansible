@@ -1,0 +1,59 @@
+---
+# CIS Debian 13 Benchmark 7.1 - Configure system file and directory access.
+# 7.1.13 (SUID/SGID review, Manual) is covered by the `aide` role (6.3): AIDE
+# records binary mode+hash and reports drift on its daily timer.
+
+- name: Ensure access to passwd/group/shells files is configured
+  ansible.builtin.file:
+    path: "/etc/{{ item }}"
+    state: file
+    owner: root
+    group: root
+    mode: "0644"
+  loop: [passwd, passwd-, group, group-, shells]
+  tags: [cis, debian_13_cis, "debian_13_cis_7.1.1", "debian_13_cis_7.1.2", "debian_13_cis_7.1.3", "debian_13_cis_7.1.4", "debian_13_cis_7.1.9", level1]
+
+- name: Ensure access to shadow/gshadow files is configured
+  ansible.builtin.file:
+    path: "/etc/{{ item }}"
+    state: file
+    owner: root
+    group: "{{ system_file_perms_shadow_group }}"
+    mode: "0640"
+  loop: [shadow, shadow-, gshadow, gshadow-]
+  tags: [cis, debian_13_cis, "debian_13_cis_7.1.5", "debian_13_cis_7.1.6", "debian_13_cis_7.1.7", "debian_13_cis_7.1.8", level1]
+
+- name: Check for /etc/security/opasswd and its backup
+  ansible.builtin.stat:
+    path: "/etc/security/{{ item }}"
+  register: system_file_perms_opasswd
+  loop: [opasswd, opasswd.old]
+  tags: [cis, debian_13_cis, "debian_13_cis_7.1.10", level1]
+
+- name: Ensure access to /etc/security/opasswd is configured
+  ansible.builtin.file:
+    path: "/etc/security/{{ item.item }}"
+    state: file
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ system_file_perms_opasswd.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: item.stat.exists
+  tags: [cis, debian_13_cis, "debian_13_cis_7.1.10", level1]
+
+- name: Secure world-writable files and directories
+  ansible.builtin.script:
+    cmd: world-writable-permissions.sh
+  register: system_file_perms_ww
+  changed_when: system_file_perms_ww.stdout | trim | length > 0
+  tags: [cis, debian_13_cis, "debian_13_cis_7.1.11", level1]
+
+- name: Audit for files/directories without an owner or group
+  ansible.builtin.script:
+    cmd: unowned-files-audit.sh
+  register: system_file_perms_unowned
+  changed_when: false
+  failed_when: "'** FAIL **' in system_file_perms_unowned.stdout"
+  tags: [cis, debian_13_cis, "debian_13_cis_7.1.12", level1]

@@ -1,0 +1,4 @@
+---
+# roles/system_file_perms - CIS Debian 13 section 7.1.
+# On Debian the shadow files are group-owned by `shadow`; CIS also permits root.
+system_file_perms_shadow_group: shadow
