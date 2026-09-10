@@ -18,7 +18,6 @@
     owner: root
     group: root
     mode: "0644"
-  notify: Update grub
   tags: [cis, debian_13_cis, "debian_13_cis_1.3.1.2", level1]
 
 - name: Keep --unrestricted on generated menuentries
@@ -27,7 +26,6 @@
     regexp: '^(CLASS="(?:(?!--unrestricted).)*?)"\s*$'
     replace: '\1 --unrestricted"'
   when: bootloader_keep_unrestricted
-  notify: Update grub
   tags: [cis, debian_13_cis, "debian_13_cis_1.4.1", level1]
 
 - name: Deploy bootloader password
@@ -38,17 +36,36 @@
     group: root
     mode: "0755"
   when: bootloader_password_hash | length > 0
-  notify: Update grub
+  tags: [cis, debian_13_cis, "debian_13_cis_1.4.1", level1]
+
+- name: Fail when a bootloader password is required but unset
+  ansible.builtin.assert:
+    that: bootloader_password_hash | length > 0
+    fail_msg: >-
+      bootloader_require_password is true but bootloader_password_hash is empty.
+      Generate a hash with `grub-mkpasswd-pbkdf2 --iteration-count=600000` and set
+      it (vaulted).
+    quiet: true
+  when: bootloader_require_password
   tags: [cis, debian_13_cis, "debian_13_cis_1.4.1", level1]
 
 - name: Report that the bootloader password is unset
   ansible.builtin.debug:
     msg: >-
-      bootloader_password_hash is empty - the bootloader password is not applied.
-      Generate a hash with `grub-mkpasswd-pbkdf2 --iteration-count=600000` and set
-      it (vaulted).
-  when: bootloader_password_hash | length == 0
+      bootloader_password_hash is empty - 1.4.1 is not enforced. Generate a hash
+      with `grub-mkpasswd-pbkdf2 --iteration-count=600000` and set it (vaulted),
+      or set bootloader_require_password=true to make this a hard failure.
+  when: bootloader_password_hash | length == 0 and not bootloader_require_password
   tags: [cis, debian_13_cis, "debian_13_cis_1.4.1", level1]
+
+# Explicit task, not a handler: it must run before the end-of-play reboot, and a
+# cross-role `Update grub` handler flushed after it. The drop-in tasks above
+# report the actual change; this only recompiles the derived grub.cfg. auditd
+# regenerates again in section 6 once its own drop-in is in place.
+- name: Regenerate the GRUB configuration
+  ansible.builtin.command: "{{ bootloader_update_command }}"
+  changed_when: false
+  tags: [cis, debian_13_cis, "debian_13_cis_1.3.1.2", "debian_13_cis_1.4.1", level1]
 
 - name: Ensure access to the bootloader config is restricted
   ansible.builtin.file:

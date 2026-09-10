@@ -16,6 +16,11 @@ bootloader_cmdline_extra: []
 bootloader_password_hash: ""
 bootloader_superuser: root
 
+# When true, an empty bootloader_password_hash fails the run instead of just
+# warning. Keep false for site.yml / CI; set true (e.g. in prod host_vars) once
+# the hash is vaulted so 1.4.1 cannot silently regress.
+bootloader_require_password: false
+
 # Keep `--unrestricted` on the generated menuentries so the default entry still
 # boots unattended (Ansible reconnects over SSH); the password then only guards
 # interactive edit / the GRUB shell. Required on remote hosts.

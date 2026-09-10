@@ -10,9 +10,5 @@
     state: restarted
   listen: Restart auditd
 
-# Shares its name with the bootloader role's handler so that, in a single play,
-# grub is regenerated once after both roles have written their drop-ins.
-- name: Regenerate grub config
-  ansible.builtin.command: "{{ auditd_grub_update_command }}"
-  changed_when: true
-  listen: Update grub
+# GRUB regeneration for the audit cmdline drop-in is an explicit task in
+# tasks/main.yml, not a handler - see the note in roles/bootloader/handlers.

@@ -1,12 +1,12 @@
 ---
-# `Regenerate grub config` and `Reboot the host` are shared, by name, with the
-# auditd and filesystem_mounts roles so that in a single play each collapses to
-# one run no matter how many roles notify it.
-- name: Regenerate grub config
-  ansible.builtin.command: "{{ bootloader_update_command }}"
-  changed_when: true
-  listen: Update grub
-
+# GRUB regeneration is deliberately NOT a handler. A deduped cross-role handler
+# flushes at whichever role defined it last (auditd, section 6), which is AFTER
+# `Reboot the host` - so the host rebooted before `update-grub` ever ran. It is
+# now an explicit end-of-role task here and in auditd; each runs mid-play, before
+# the end-of-play reboot.
+#
+# `Reboot the host` stays a handler, shared by name with filesystem_mounts so a
+# reboot from either role collapses to one.
 - name: Reboot the host
   ansible.builtin.reboot:
   listen: Reboot

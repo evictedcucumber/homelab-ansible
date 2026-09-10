@@ -2,17 +2,48 @@
 # roles/sysctl - apply hardening kernel parameters.
 #
 # Defaults implement the CIS Debian Linux 13 Benchmark v1.0.0 parameters from
-# sections 1.5 (process hardening) and 3.3 (network parameters). The nested
-# mapping is flattened to dotted `sysctl` keys at run time; the top-level key
-# (`fs` / `kernel` / `net`) selects the drop-in file.
+# sections 1.5 (process hardening) and 3.3 (network parameters), plus a handful
+# of non-CIS keys flagged by Lynis KRNL-6000 (dev.tty.ldisc_autoload,
+# fs.protected_fifos, fs.protected_regular, net.core.bpf_jit_harden,
+# kernel.unprivileged_bpf_disabled). The nested mapping is flattened to dotted
+# `sysctl` keys at run time; the top-level key (`dev` / `fs` / `kernel` / `net`)
+# selects the drop-in file.
+#
+# The drop-ins are named `99-cis-*` so they are processed AFTER systemd's
+# /usr/lib/sysctl.d/50-default.conf. That file carries `-net.ipv4.conf.all.rp_filter`
+# (a "suppress earlier assignment" directive), so a `20-*` drop-in setting
+# rp_filter=1 is silently dropped at boot and the kernel default (0) wins - which
+# is exactly what Lynis KRNL-6000 caught. Anything sorting after `50-default.conf`
+# is safe.
 
 sysctl_hardening_files:
-  fs: /etc/sysctl.d/20-fs.conf
-  kernel: /etc/sysctl.d/20-kernel.conf
-  net: /etc/sysctl.d/20-network.conf
+  dev: /etc/sysctl.d/99-cis-dev.conf
+  fs: /etc/sysctl.d/99-cis-fs.conf
+  kernel: /etc/sysctl.d/99-cis-kernel.conf
+  net: /etc/sysctl.d/99-cis-network.conf
+
+# Superseded drop-in names removed from the target before the current set is
+# written (older single-file layout, and the pre-99- names). A file left behind
+# from an earlier layout can sort after the current one and override it.
+sysctl_hardening_stale_files:
+  - /etc/sysctl.d/20-dev.conf
+  - /etc/sysctl.d/20-fs.conf
+  - /etc/sysctl.d/20-kernel.conf
+  - /etc/sysctl.d/20-network.conf
+  - /etc/sysctl.d/60-kernel_sysctl.conf
+# After writing the drop-ins, run `sysctl --system` (boot-order re-application)
+# and assert every managed key holds its expected value. Set false per-host if a
+# platform legitimately overrides one (e.g. a router/hypervisor that needs loose
+# rp_filter) - pair that with a documented deviation.
+sysctl_verify_effective: true
 
 sysctl_hardening:
+  dev:
+    tty:
+      ldisc_autoload: 0  # Lynis KRNL-6000 (not CIS) - block autoload of TTY line disciplines
   net:
+    core:
+      bpf_jit_harden: 2  # Lynis KRNL-6000 (not CIS) - harden the eBPF JIT for all users
     ipv4:
       ip_forward: 0
       conf:
@@ -46,6 +77,8 @@ sysctl_hardening:
   fs:
     protected_hardlinks: 1
     protected_symlinks: 1
+    protected_fifos: 2  # Lynis KRNL-6000 (not CIS) - no O_CREAT open of FIFOs in world-writable dirs
+    protected_regular: 2  # Lynis KRNL-6000 (not CIS) - same for regular files
     suid_dumpable: 0
   kernel:
     yama:
@@ -54,3 +87,4 @@ sysctl_hardening:
     kptr_restrict: 2
     randomize_va_space: 2
     apparmor_restrict_unprivileged_unconfined: 1
+    unprivileged_bpf_disabled: 2  # Lynis KRNL-6000 (not CIS) - Debian 13 default; pinned explicitly

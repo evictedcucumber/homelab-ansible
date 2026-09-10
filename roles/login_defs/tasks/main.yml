@@ -82,6 +82,25 @@
     fail_msg: "root's password field is empty - it must be set or locked."
   tags: [cis, debian_13_cis, "debian_13_cis_5.4.2.4", level1]
 
+- name: Assert the vaulted root password hash uses yescrypt
+  ansible.builtin.assert:
+    quiet: true
+    that: login_defs_root_password_hash is match('^\$y\$')
+    fail_msg: >-
+      login_defs_root_password_hash must be a yescrypt ($y$...) hash from
+      `mkpasswd -m yescrypt` so 5.4.1.4 / Lynis AUTH-9229 are satisfied.
+  when: login_defs_root_password_hash | length > 0
+  tags: [cis, debian_13_cis, "debian_13_cis_5.4.1.4", level1]
+
+- name: Re-apply root's password so its hash uses the configured algorithm
+  ansible.builtin.user:
+    name: root
+    password: "{{ login_defs_root_password_hash }}"
+    update_password: always
+  when: login_defs_root_password_hash | length > 0
+  no_log: true
+  tags: [cis, debian_13_cis, "debian_13_cis_5.4.1.4", level1]
+
 - name: Set service accounts to nologin and lock shell-less accounts
   ansible.builtin.script:
     cmd: lock-nologin-accounts.sh

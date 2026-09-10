@@ -3,10 +3,15 @@
 #
 # The banner text must NOT reveal OS/version info: no mingetty escapes
 # (\m \r \s \v) and no reference to the distribution name. Set to local site
-# policy - include the owning organisation and monitoring notice.
+# policy - include the owning organisation and monitoring notice. Keep at least
+# five of Lynis BANN-7126/7130's legal keywords (access, authorised, monitor,
+# prohibited, prosecute, restricted, subject, system, law, ...) or the banner
+# is graded "weak".
 
 warning_banners_text: >-
-  Authorized users only. All activity may be monitored and reported.
+  Access to this system is restricted to authorised users only. All activity is
+  monitored and recorded. Unauthorised use is prohibited and may be prosecuted
+  under applicable law.
 
 # Per-file overrides (default to warning_banners_text).
 warning_banners_motd_text: "{{ warning_banners_text }}"

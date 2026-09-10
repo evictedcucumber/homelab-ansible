@@ -17,13 +17,15 @@ ssh_server_config:
   HostbasedAuthentication: "no"             # 5.1.10
   IgnoreRhosts: "yes"                       # 5.1.11
   DisableForwarding: "yes"                  # 5.1.8
+  AllowTcpForwarding: "no"                  # 5.1.8 via DisableForwarding; explicit for Lynis SSH-7408
+  AllowAgentForwarding: "no"                # 5.1.8 via DisableForwarding; explicit for Lynis SSH-7408
   LoginGraceTime: "60"                      # 5.1.14
   LogLevel: "VERBOSE"                       # 5.1.15
-  MaxAuthTries: "4"                         # 5.1.17
+  MaxAuthTries: "3"                         # 5.1.17 (CIS <=4; tightened for Lynis SSH-7408)
   MaxSessions: "10"                         # 5.1.18
   MaxStartups: "10:30:60"                   # 5.1.19
   ClientAliveInterval: "15"                 # 5.1.7
-  ClientAliveCountMax: "3"                  # 5.1.7
+  ClientAliveCountMax: "2"                  # 5.1.7 (CIS 1-3; tightened for Lynis SSH-7408)
   Banner: "/etc/issue.net"                  # 5.1.5
   PrintMotd: "no"
   AuthorizedKeysFile: ".ssh/authorized_keys"

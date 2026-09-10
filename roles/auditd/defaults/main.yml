@@ -18,6 +18,10 @@ auditd_space_left_action: email  # 6.2.2.4
 auditd_admin_space_left_action: single  # 6.2.2.4
 auditd_action_mail_acct: root  # 6.2.2.4
 auditd_num_logs: 5
+# auditd checks that action_mail_acct is deliverable at start-up when this is
+# yes; with no local MTA that aborts the daemon. Off by default - the *_action
+# settings above still satisfy 6.2.2.4.
+auditd_verify_email: false
 
 # 6.2.3 rules.
 auditd_uid_min: 1000
@@ -69,6 +73,12 @@ auditd_watches:
 # the later Proxmox install can still add rules without a reboot; set to 2 for
 # full 6.2.3.36 compliance.
 auditd_finalize_mode: 1
+
+# After enabling the service, load the rules and assert auditd is actually
+# running with a non-empty rule set - so a daemon that will not start (or starts
+# with `enabled 0` / no rules) fails the run here instead of leaving all of
+# section 6.2 silently inert. Set false to skip the assertion.
+auditd_verify_effective: true
 
 # 6.2.4 access to audit artefacts.
 auditd_log_mode: "0640"

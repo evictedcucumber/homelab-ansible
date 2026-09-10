@@ -41,6 +41,13 @@ LOG_UNKFAIL_ENAB	no
 LOG_OK_LOGINS		no
 
 #
+# Enable logging and display of /var/log/faillog login failure info. This is a
+# fallback for console logins; pam_faillock is the primary lockout mechanism
+# (CIS 5.3.3.1). Restores the Debian stock default that Lynis AUTH-9408 expects.
+#
+FAILLOG_ENAB		yes
+
+#
 # If defined, file which maps tty line to TERM environment parameter.
 # Each line of the file is in a format similar to "vt100  tty01".
 #
@@ -167,6 +174,13 @@ CHFN_RESTRICT		rwh
 #
 # CIS Debian 13 Benchmark 5.4.1.4
 ENCRYPT_METHOD YESCRYPT
+
+# yescrypt (selected above) ignores SHA_CRYPT_{MIN,MAX}_ROUNDS - these apply only
+# when a caller forces SHA256/SHA512. Kept as a hardened fallback for that path,
+# and to satisfy Lynis AUTH-9230. yescrypt's own cost factor is left at the
+# Debian default (5); raising it hurts auth latency/memory on this VM.
+SHA_CRYPT_MIN_ROUNDS	640000
+SHA_CRYPT_MAX_ROUNDS	640000
 
 #
 # Should login be allowed if we can't cd to the home directory?
