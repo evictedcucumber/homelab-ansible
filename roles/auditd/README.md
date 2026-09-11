@@ -17,6 +17,15 @@ emitted if it exists, since a rule for a missing path (`/etc/netplan`,
 fail; `50-privileged.rules` is generated from a live SUID/SGID scan;
 `99-finalize.rules` is `-e {{ auditd_finalize_mode }}`.
 
+`/var/run/faillock` (one of the `50-cis.rules` watch targets) lives on tmpfs
+and pam_faillock only creates it lazily on the first auth attempt, so at boot
+it doesn't exist yet when `audit-rules.service` loads that rule - failing it
+fails the whole rule load, which fails `audit-rules.service` and, via
+`auditd.service`'s `Requires=`, takes auditd down with it every reboot until
+something logs in and recreates the directory. The role ships a `tmpfiles.d`
+drop-in (`/etc/tmpfiles.d/audit-faillock.conf`) that recreates the directory
+before `audit-rules.service` runs, closing that race.
+
 After enabling the service the role loads the rules and asserts auditd is
 actually running with a non-empty rule set (`auditd_verify_effective`, default
 true); on failure it dumps `systemctl show` / `journalctl -u auditd` and stops,
@@ -33,3 +42,8 @@ Two deliberate defaults worth knowing:
 - `auditd_disk_full_action` is `halt` — the host halts if `/var/log/audit`
   fills. Set it to `single` (also CIS-compliant) if a hard halt is unacceptable
   on a hypervisor.
+- `auditd_log_mode`/`auditd_log_dir_mode` are `0600`/`0700`, not `0640`/`0750`.
+  auditd itself hardcodes those modes on every start with no config knob to
+  change them, so asking for anything looser than that just gets reset by the
+  next restart/reboot — 0600/0700 satisfies "0640/0750 or more restrictive"
+  and stops the role fighting the daemon.

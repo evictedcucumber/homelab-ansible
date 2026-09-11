@@ -58,6 +58,25 @@
   notify: Load audit rules
   tags: [cis, debian_13_cis, "debian_13_cis_6.2.3.35", level2]
 
+# /var/run/faillock is tmpfs and pam_faillock only creates it lazily on the
+# first auth attempt, so it doesn't exist yet when audit-rules.service loads
+# the watch rule at boot - failing that rule fails the whole rule load, which
+# fails audit-rules.service and (via auditd.service's Requires=) auditd
+# itself, every reboot, until something logs in and recreates the directory.
+- name: Deploy a tmpfiles.d rule for the faillock watch target
+  ansible.builtin.copy:
+    src: audit-faillock.tmpfiles.conf
+    dest: /etc/tmpfiles.d/audit-faillock.conf
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [cis, debian_13_cis, "debian_13_cis_6.2.3", level2]
+
+- name: Materialise the faillock tally directory now
+  ansible.builtin.command: systemd-tmpfiles --create /etc/tmpfiles.d/audit-faillock.conf
+  changed_when: false
+  tags: [cis, debian_13_cis, "debian_13_cis_6.2.3", level2]
+
 - name: Check which audit watch targets exist
   ansible.builtin.stat:
     path: "{{ item.path }}"

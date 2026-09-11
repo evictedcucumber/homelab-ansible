@@ -80,9 +80,14 @@ auditd_finalize_mode: 1
 # section 6.2 silently inert. Set false to skip the assertion.
 auditd_verify_effective: true
 
-# 6.2.4 access to audit artefacts.
-auditd_log_mode: "0640"
-auditd_log_dir_mode: "0750"
+# 6.2.4 access to audit artefacts. auditd (audit-userspace >= 4.x) hardcodes
+# audit.log to 0600 and /var/log/audit to 0700 on every start - there is no
+# auditd.conf knob for the mode bits (log_group only sets the GID). 0600/0700
+# already satisfies "0640/0750 or more restrictive", so match it instead of
+# fighting the daemon: forcing 0640/0750 here just gets reset to 0600/0700 by
+# the next auditd (re)start/reboot, showing as spurious `changed` every run.
+auditd_log_mode: "0600"
+auditd_log_dir_mode: "0700"
 auditd_conf_mode: "0640"
 auditd_tools:
   - /sbin/auditctl
