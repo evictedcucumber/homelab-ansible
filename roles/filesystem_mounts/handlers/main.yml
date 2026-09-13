@@ -1,6 +1,4 @@
 ---
-# Name matches the bootloader role's reboot handler so that, when both roles run
-# in one play, `notify: Reboot` collapses to a single reboot.
-- name: Reboot the host
+- name: Reboot
   ansible.builtin.reboot:
   listen: Reboot
