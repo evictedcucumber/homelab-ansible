@@ -1,23 +1,13 @@
 ---
-# Debian 13 OS patching - run on a cadence, separate from the hardening baseline
-# (playbooks/os-debian-13.yml) so that does not upgrade packages every run.
-# CIS Debian Linux 13 Benchmark v1.0.0 recommendation 1.2.2.1.
-#
-# One patch playbook per supported OS (patch-<os>-<ver>.yml), mirroring the
-# os-<os>-<ver>.yml setup playbooks. This one is apt/Debian specific.
-#
-# By default this only reports when a reboot is pending; pass -e patch_reboot=true
-# (or set it in group_vars) to reboot automatically.
 - name: Patch Debian 13
   hosts: debian_13
   gather_facts: true
-  tags: [patch, cis, debian_13_cis]
   vars:
     patch_reboot: false
   tasks:
-    - name: Apply available upgrades
+    - name: Apply Available Upgrades
       ansible.builtin.import_role:
-        name: package_mgmt
+        name: package_management
         tasks_from: upgrade.yml
 
     - name: Check whether a reboot is required

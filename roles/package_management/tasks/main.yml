@@ -1,0 +1,88 @@
+---
+- name: Remove Legacy sources.list
+  ansible.builtin.file:
+    path: /etc/apt/sources.list
+    state: absent
+- name: Deploy debian.sources
+  ansible.builtin.copy:
+    src: "sources/debian.sources"
+    dest: "/etc/apt/sources.list.d/debian.sources"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Find Existing Files in /etc/apt/sources.list.d
+  ansible.builtin.find:
+    paths: /etc/apt/sources.list.d
+    excludes: 'debian.sources'
+    file_type: file
+  register: package_management_existing_sources
+- name: Remove Unmanaged Source Files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ package_management_existing_sources.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+- name: Secure APT Key / Credential / Source Directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ package_management_secure_dirs }}"
+- name: Find APT GPG Keyring Files
+  ansible.builtin.find:
+    paths: "{{ package_management_keyring_dirs }}"
+    patterns: ["*gpg"]
+    file_type: file
+  register: package_management_keyrings
+- name: Restrict APT GPG Keyring Files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: file
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ package_management_keyrings.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+- name: Find Files in /etc/apt/auth.conf.d
+  ansible.builtin.find:
+    paths: /etc/apt/auth.conf.d
+    file_type: file
+  register: package_management_auth_files
+- name: Restrict /etc/apt/auth.conf.d files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: file
+    owner: root
+    group: root
+    mode: "0640"
+  loop: "{{ package_management_auth_files.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+- name: Find Files Remaining in /etc/apt/sources.list.d
+  ansible.builtin.find:
+    paths: /etc/apt/sources.list.d
+    file_type: file
+  register: package_management_final_sources
+- name: Restrict Files in /etc/apt/sources.list.d
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: file
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ package_management_final_sources.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+- name: Disable Installation of Weak Dependencies
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/60-no-weak-dependencies
+    content: |
+      APT::Install-Recommends "0";
+      APT::Install-Suggests "0";
+    owner: root
+    group: root
+    mode: "0644"

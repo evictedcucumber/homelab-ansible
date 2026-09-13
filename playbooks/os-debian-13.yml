@@ -28,11 +28,10 @@
     - name: Filesystem partitions and mount options
       ansible.builtin.import_role:
         name: filesystem_mounts
+    - name: Package Management
       tags: [section1]
-    - name: Package management
       ansible.builtin.import_role:
-        name: package_mgmt
-      tags: [section1]
+        name: package_management
     - name: Mandatory access control - AppArmor
       ansible.builtin.import_role:
         name: apparmor

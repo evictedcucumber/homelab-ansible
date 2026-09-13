@@ -1,0 +1,9 @@
+---
+package_management_secure_dirs:
+  - /etc/apt/trusted.gpg.d
+  - /etc/apt/auth.conf.d
+  - /etc/apt/sources.list.d
+  - /usr/share/keyrings
+package_management_keyring_dirs:
+  - /usr/share/keyrings
+  - /etc/apt/trusted.gpg.d
