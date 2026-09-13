@@ -1,77 +1,30 @@
 ---
-# CIS Debian 13 Benchmark 1.4 - Configure Bootloader.
-- name: Load OS-specific variables
-  ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', _ff) }}"
-  vars:
-    _ff:
-      files:
-        - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
-        - "{{ ansible_facts['os_family'] }}.yml"
-        - main.yml
-      paths: [vars]
-  tags: [always]
-
-- name: Deploy kernel command-line hardening drop-in
+- name: Deploy Kernel Command-Line Hardening Drop-In
   ansible.builtin.template:
-    src: 99-cis.cfg.j2
-    dest: "{{ bootloader_default_grubd_dir }}/99-cis.cfg"
+    src: 99-default.cfg.j2
+    dest: "/etc/default/grub.d/99-default.cfg"
     owner: root
     group: root
     mode: "0644"
-  tags: [cis, debian_13_cis, "debian_13_cis_1.3.1.2", level1]
-
-- name: Keep --unrestricted on generated menuentries
+  notify: [Update Grub Config, Reboot]
+- name: Keep --unrestricted on Generated Menuentries
   ansible.builtin.replace:
-    path: "{{ bootloader_linux_script }}"
+    path: "/etc/grub.d/10_linux"
     regexp: '^(CLASS="(?:(?!--unrestricted).)*?)"\s*$'
     replace: '\1 --unrestricted"'
-  when: bootloader_keep_unrestricted
-  tags: [cis, debian_13_cis, "debian_13_cis_1.4.1", level1]
-
-- name: Deploy bootloader password
+  notify: [Update Grub Config, Reboot]
+- name: Deploy Bootloader Password
   ansible.builtin.template:
     src: 40_cis_password.j2
-    dest: "{{ bootloader_scripts_dir }}/40_cis_password"
+    dest: "/etc/grub.d/40_cis_password"
     owner: root
     group: root
     mode: "0755"
-  when: bootloader_password_hash | length > 0
-  tags: [cis, debian_13_cis, "debian_13_cis_1.4.1", level1]
-
-- name: Fail when a bootloader password is required but unset
-  ansible.builtin.assert:
-    that: bootloader_password_hash | length > 0
-    fail_msg: >-
-      bootloader_require_password is true but bootloader_password_hash is empty.
-      Generate a hash with `grub-mkpasswd-pbkdf2 --iteration-count=600000` and set
-      it (vaulted).
-    quiet: true
-  when: bootloader_require_password
-  tags: [cis, debian_13_cis, "debian_13_cis_1.4.1", level1]
-
-- name: Report that the bootloader password is unset
-  ansible.builtin.debug:
-    msg: >-
-      bootloader_password_hash is empty - 1.4.1 is not enforced. Generate a hash
-      with `grub-mkpasswd-pbkdf2 --iteration-count=600000` and set it (vaulted),
-      or set bootloader_require_password=true to make this a hard failure.
-  when: bootloader_password_hash | length == 0 and not bootloader_require_password
-  tags: [cis, debian_13_cis, "debian_13_cis_1.4.1", level1]
-
-# Explicit task, not a handler: it must run before the end-of-play reboot, and a
-# cross-role `Update grub` handler flushed after it. The drop-in tasks above
-# report the actual change; this only recompiles the derived grub.cfg. auditd
-# regenerates again in section 6 once its own drop-in is in place.
-- name: Regenerate the GRUB configuration
-  ansible.builtin.command: "{{ bootloader_update_command }}"
-  changed_when: false
-  tags: [cis, debian_13_cis, "debian_13_cis_1.3.1.2", "debian_13_cis_1.4.1", level1]
-
-- name: Ensure access to the bootloader config is restricted
+  notify: [Update Grub Config, Reboot]
+- name: Ensure Access to the Bootloader Config is Restricted
   ansible.builtin.file:
-    path: "{{ bootloader_grub_cfg }}"
+    path: "/boot/grub/grub.cfg"
     state: file
     owner: root
     group: root
-    mode: "{{ bootloader_grub_cfg_mode }}"
-  tags: [cis, debian_13_cis, "debian_13_cis_1.4.2", level1]
+    mode: "0600"

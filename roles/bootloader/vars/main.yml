@@ -1,7 +1,0 @@
----
-# Debian / Ubuntu.
-bootloader_grub_cfg: /boot/grub/grub.cfg
-bootloader_default_grubd_dir: /etc/default/grub.d
-bootloader_scripts_dir: /etc/grub.d
-bootloader_linux_script: /etc/grub.d/10_linux
-bootloader_update_command: update-grub

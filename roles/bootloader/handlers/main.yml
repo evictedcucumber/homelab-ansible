@@ -1,12 +1,8 @@
 ---
-# GRUB regeneration is deliberately NOT a handler. A deduped cross-role handler
-# flushes at whichever role defined it last (auditd, section 6), which is AFTER
-# `Reboot the host` - so the host rebooted before `update-grub` ever ran. It is
-# now an explicit end-of-role task here and in auditd; each runs mid-play, before
-# the end-of-play reboot.
-#
-# `Reboot the host` stays a handler, shared by name with filesystem_mounts so a
-# reboot from either role collapses to one.
-- name: Reboot the host
+- name: Regenerate the GRUB Configuration
+  ansible.builtin.command: "update-grub"
+  changed_when: false
+  listen: Update Grub Config
+- name: Reboot
   ansible.builtin.reboot:
   listen: Reboot
