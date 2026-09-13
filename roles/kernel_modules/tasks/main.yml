@@ -1,30 +1,15 @@
 ---
-# CIS Debian 13 Benchmark 1.1.1 (filesystem modules) and 3.2 (network modules) -
-# ensure unrequired kernel modules are unloaded and cannot be loaded.
-#
-# The remediation for each module is: unload it, then drop a file in
-# /etc/modprobe.d/ with `install <mod> /bin/false` and `blacklist <mod>`.
-# Every `kernel_modules_blacklist` entry is applied; the `level` key is kept
-# for reference only.
-
 - name: Unload unrequired kernel modules
   community.general.modprobe:
-    name: "{{ item.name }}"
+    name: "{{ item }}"
     state: absent
     persistent: absent
   loop: "{{ kernel_modules_blacklist }}"
-  loop_control:
-    label: "{{ item.name }}"
-  tags: [cis, debian_13_cis, "debian_13_cis_1.1.1", "debian_13_cis_3.2", level1]
-
 - name: Deny loading of unrequired kernel modules
   ansible.builtin.template:
     src: blacklist.conf.j2
-    dest: "{{ kernel_modules_modprobe_dir }}/{{ kernel_modules_confd_prefix }}{{ item.name }}.conf"
+    dest: "/etc/modprobe.d/60-{{ item }}.conf"
     owner: root
     group: root
     mode: "0644"
   loop: "{{ kernel_modules_blacklist }}"
-  loop_control:
-    label: "{{ item.name }}"
-  tags: [cis, debian_13_cis, "debian_13_cis_1.1.1", "debian_13_cis_3.2", level1]
