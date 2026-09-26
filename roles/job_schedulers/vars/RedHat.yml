@@ -1,3 +1,0 @@
----
-job_schedulers_cron_package: cronie
-job_schedulers_cron_service: crond
