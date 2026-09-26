@@ -1,6 +1,0 @@
----
-# Debian / Ubuntu defaults.
-chrony_package: chrony
-chrony_service: chrony
-chrony_config_dir: /etc/chrony
-chrony_config_file: /etc/chrony/chrony.conf
