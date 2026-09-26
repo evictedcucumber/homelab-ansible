@@ -1,4 +1,4 @@
-Name: Pwquality password strength checking
+Name: pwquality Password Strength Checking
 Default: yes
 Priority: 1024
 Conflicts: cracklib

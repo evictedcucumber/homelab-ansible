@@ -1,4 +1,4 @@
-Name: Notify of failed login attempts and reset count upon success
+Name: Notify of Failed Login Attempts and Reset Count Upon Success
 Default: yes
 Priority: 1024
 Auth-Type: Primary
