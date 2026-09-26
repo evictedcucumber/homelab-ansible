@@ -1,10 +1,7 @@
-# ~/.profile: executed by Bourne-compatible login shells.
-
 if [ "$BASH" ]; then
   if [ -f ~/.bashrc ]; then
     . ~/.bashrc
   fi
 fi
 
-# CIS Debian 13 Benchmark 5.4.2.6: umask 027 or more restrictive.
 umask 027

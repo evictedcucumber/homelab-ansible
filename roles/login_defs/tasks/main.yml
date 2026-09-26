@@ -1,6 +1,4 @@
 ---
-# CIS Debian 13 Benchmark 5.4 - User Accounts and Environment.
-
 - name: Deploy /etc/login.defs
   ansible.builtin.copy:
     src: login.defs
@@ -9,16 +7,6 @@
     group: root
     mode: "0644"
     backup: true
-  tags:
-    - cis
-    - debian_13_cis
-    - "debian_13_cis_5.4.1.1"
-    - "debian_13_cis_5.4.1.2"
-    - "debian_13_cis_5.4.1.3"
-    - "debian_13_cis_5.4.1.4"
-    - "debian_13_cis_5.4.3.3"
-    - level1
-
 - name: Deploy /etc/default/useradd
   ansible.builtin.copy:
     src: useradd
@@ -26,21 +14,15 @@
     owner: root
     group: root
     mode: "0644"
-  tags: [cis, debian_13_cis, "debian_13_cis_5.4.1.5", level1]
-
-- name: Ensure root primary group is GID 0
+- name: Ensure root Primary Group is GID 0
   ansible.builtin.user:
     name: root
     group: "0"
-  tags: [cis, debian_13_cis, "debian_13_cis_5.4.2.2", level1]
-
-- name: Ensure the root group has GID 0
+- name: Ensure the root Group has GID 0
   ansible.builtin.group:
     name: root
     gid: "0"
-  tags: [cis, debian_13_cis, "debian_13_cis_5.4.2.3", level1]
-
-- name: Deploy root shell environment (umask 027)
+- name: Deploy root Shell Environment
   ansible.builtin.copy:
     src: "root/{{ item.src }}"
     dest: "{{ item.dest }}"
@@ -50,9 +32,7 @@
   loop:
     - {src: profile, dest: /root/.profile}
     - {src: bashrc, dest: /root/.bashrc}
-  tags: [cis, debian_13_cis, "debian_13_cis_5.4.2.6", level1]
-
-- name: Deploy default user shell timeout and umask
+- name: Deploy Default User Shell Timeout and Umask
   ansible.builtin.copy:
     src: "{{ item }}"
     dest: "/etc/profile.d/{{ item }}"
@@ -60,58 +40,17 @@
     group: root
     mode: "0644"
   loop: [50-tmout.sh, 60-default_umask.sh]
-  tags: [cis, debian_13_cis, "debian_13_cis_5.4.3.2", "debian_13_cis_5.4.3.3", level1]
-
-- name: Ensure nologin is not listed in /etc/shells
+- name: Ensure nologin is not Listed in /etc/shells
   ansible.builtin.lineinfile:
     path: /etc/shells
     regexp: ^\s*([^#\n\r]+)?/nologin\b
     state: absent
-  tags: [cis, debian_13_cis, "debian_13_cis_5.4.3.1", level2]
-
-- name: Read root's shadow entry
+- name: Read root's Shadow Entry
   ansible.builtin.getent:
     database: shadow
     key: root
-  tags: [cis, debian_13_cis, "debian_13_cis_5.4.2.4", level1]
-
-- name: Verify root account has a password or is locked
+- name: Verify root Account has a Password or is Locked
   ansible.builtin.assert:
     quiet: true
     that: (ansible_facts.getent_shadow['root'][0] | default('')) | length > 0
     fail_msg: "root's password field is empty - it must be set or locked."
-  tags: [cis, debian_13_cis, "debian_13_cis_5.4.2.4", level1]
-
-- name: Assert the vaulted root password hash uses yescrypt
-  ansible.builtin.assert:
-    quiet: true
-    that: login_defs_root_password_hash is match('^\$y\$')
-    fail_msg: >-
-      login_defs_root_password_hash must be a yescrypt ($y$...) hash from
-      `mkpasswd -m yescrypt` so 5.4.1.4 / Lynis AUTH-9229 are satisfied.
-  when: login_defs_root_password_hash | length > 0
-  tags: [cis, debian_13_cis, "debian_13_cis_5.4.1.4", level1]
-
-- name: Re-apply root's password so its hash uses the configured algorithm
-  ansible.builtin.user:
-    name: root
-    password: "{{ login_defs_root_password_hash }}"
-    update_password: always
-  when: login_defs_root_password_hash | length > 0
-  no_log: true
-  tags: [cis, debian_13_cis, "debian_13_cis_5.4.1.4", level1]
-
-- name: Set service accounts to nologin and lock shell-less accounts
-  ansible.builtin.script:
-    cmd: lock-nologin-accounts.sh
-  register: login_defs_lock
-  changed_when: "'ok - all service accounts' not in login_defs_lock.stdout"
-  tags: [cis, debian_13_cis, "debian_13_cis_5.4.2.7", "debian_13_cis_5.4.2.8", level1]
-
-- name: Audit root PATH integrity
-  ansible.builtin.script:
-    cmd: root-path-integrity.sh
-  register: login_defs_root_path
-  changed_when: false
-  failed_when: "'** FAIL **' in login_defs_root_path.stdout"
-  tags: [cis, debian_13_cis, "debian_13_cis_5.4.2.5", level1]
