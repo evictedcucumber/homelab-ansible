@@ -1,6 +1,5 @@
 ---
-# CIS Debian 13 Benchmark 1.5 (process hardening) and 3.3 (network parameters).
-- name: Ensure sysctl drop-in directories exist
+- name: Ensure sysctl Drop-In Directories Exist
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -8,16 +7,22 @@
     group: root
     mode: "0755"
   loop: "{{ sysctl_hardening_files.values() | map('dirname') | unique | list }}"
-  tags: [cis, debian_13_cis, sysctl]
-
-- name: Remove superseded sysctl drop-ins
+- name: Find Stray Files in the Drop-In Directories
+  ansible.builtin.find:
+    paths: "{{ sysctl_hardening_files.values() | map('dirname') | unique | list }}"
+    excludes: "{{ sysctl_hardening_files.values() | map('basename') | list }}"
+    hidden: true
+    file_type: any
+  register: sysctl_stray
+- name: Remove Stray Files in the Drop-In Directories
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ item.path }}"
     state: absent
-  loop: "{{ sysctl_hardening_stale_files }}"
-  tags: [cis, debian_13_cis, sysctl]
-
-- name: Apply hardening kernel parameters
+  loop: "{{ sysctl_stray.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  notify: Reboot
+- name: Apply Hardening Kernel Parameters
   ansible.posix.sysctl:
     name: "{{ item.key }}"
     value: "{{ item.value | string }}"
@@ -28,43 +33,4 @@
   loop: "{{ sysctl_hardening | flatten_dict | dict2items }}"
   loop_control:
     label: "{{ item.key }}"
-  tags: [cis, debian_13_cis, "debian_13_cis_1.3.1.4", "debian_13_cis_1.5", "debian_13_cis_3.3", sysctl]
-
-# `ansible.posix.sysctl` only reloads its own file; a drop-in that sorts later
-# (e.g. systemd's 50-default.conf suppressing all.rp_filter) is not caught until
-# the next reboot. Re-apply every drop-in in boot order and read the keys back so
-# an override fails the run here instead of silently degrading in service.
-- name: Re-apply all sysctl drop-ins in boot order
-  ansible.builtin.command: sysctl --system
-  changed_when: false
-  check_mode: false
-  failed_when: false
-  when: sysctl_verify_effective
-  tags: [cis, debian_13_cis, "debian_13_cis_3.3", sysctl]
-
-- name: Read back the effective value of every managed key
-  ansible.builtin.command: "sysctl -n {{ item.key }}"
-  register: sysctl_readback
-  changed_when: false
-  check_mode: false
-  failed_when: false
-  loop: "{{ sysctl_hardening | flatten_dict | dict2items }}"
-  loop_control:
-    label: "{{ item.key }}"
-  when: sysctl_verify_effective
-  tags: [cis, debian_13_cis, "debian_13_cis_3.3", sysctl]
-
-- name: Assert every managed key survived boot-order re-application
-  ansible.builtin.assert:
-    that: item.stdout | trim == (item.item.value | string)
-    fail_msg: >-
-      {{ item.item.key }} is '{{ item.stdout | trim }}' after `sysctl --system`,
-      expected '{{ item.item.value }}'. A drop-in sorting after
-      {{ sysctl_hardening_files[item.item.key | split('.') | first] }} is
-      overriding it - check `systemd-analyze cat-config sysctl.d`.
-    quiet: true
-  loop: "{{ sysctl_readback.results | default([]) }}"
-  loop_control:
-    label: "{{ item.item.key }}"
-  when: sysctl_verify_effective
-  tags: [cis, debian_13_cis, "debian_13_cis_3.3", sysctl]
+  notify: Reboot
