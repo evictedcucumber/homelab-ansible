@@ -1,3 +1,0 @@
-# Managed by Ansible (role: auditd). Rules live in the NN-*.rules files in
-# this directory; this stock file is emptied so its trailing `-D` does not
-# wipe them.

@@ -1,254 +1,103 @@
 ---
-# CIS Debian 13 Benchmark 6.2 - System Auditing (auditd). All Level 2.
-
-- name: Ensure auditd packages are installed
+- name: Ensure auditd Packages are Present
   ansible.builtin.apt:
     name: "{{ auditd_packages }}"
     state: present
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.1.1", level2]
-
-- name: Enable auditing for processes that start before auditd
-  ansible.builtin.template:
-    src: 40-cis-audit.cfg.j2
-    dest: /etc/default/grub.d/40-cis-audit.cfg
+- name: Enable Auditing for Processes that Start before auditd
+  ansible.builtin.copy:
+    src: 40-audit.cfg
+    dest: /etc/default/grub.d/40-audit.cfg
     owner: root
     group: root
     mode: "0644"
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.1.3", "debian_13_cis_6.2.1.4", level2]
-
-# Explicit task, not a handler (see roles/bootloader/handlers): it must run
-# before the end-of-play reboot. Regenerates after the drop-in above so the
-# audit cmdline lands in grub.cfg; bootloader ran its own regen in section 1.
-- name: Regenerate the GRUB configuration
-  ansible.builtin.command: "{{ auditd_grub_update_command }}"
-  changed_when: false
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.1.3", "debian_13_cis_6.2.1.4", level2]
-
-- name: Configure audit data retention
-  ansible.builtin.template:
-    src: auditd.conf.j2
+  notify: Regenerate Grub
+- name: Configure Audit Data Retention
+  ansible.builtin.copy:
+    src: auditd.conf
     dest: /etc/audit/auditd.conf
     owner: root
     group: root
     mode: "0640"
   notify: Restart auditd
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.2.1", "debian_13_cis_6.2.2.2", "debian_13_cis_6.2.2.3", "debian_13_cis_6.2.2.4", level2]
-
-# --- 6.2.3 audit rules ---
-# augenrules concatenates rules.d/*.rules in C-locale order. The distribution
-# ships an unnumbered rules.d/audit.rules whose trailing `-D` would wipe the
-# numbered files, so it is emptied and 01-initialize.rules owns `-D` + buffers.
-- name: Neutralise the distribution's default audit.rules
+- name: Neutralise the Distribution's Default audit.rules
   ansible.builtin.copy:
     src: audit.rules
     dest: /etc/audit/rules.d/audit.rules
     owner: root
     group: root
     mode: "0640"
-  notify: Load audit rules
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.3", level2]
-
-- name: Deploy the audit rules initialiser
-  ansible.builtin.template:
-    src: 01-initialize.rules.j2
+  notify: Load Audit Rules
+- name: Deploy the Audit Rules Initialiser
+  ansible.builtin.copy:
+    src: 01-initialize.rules
     dest: /etc/audit/rules.d/01-initialize.rules
     owner: root
     group: root
     mode: "0640"
-  notify: Load audit rules
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.3.35", level2]
-
-# /var/run/faillock is tmpfs and pam_faillock only creates it lazily on the
-# first auth attempt, so it doesn't exist yet when audit-rules.service loads
-# the watch rule at boot - failing that rule fails the whole rule load, which
-# fails audit-rules.service and (via auditd.service's Requires=) auditd
-# itself, every reboot, until something logs in and recreates the directory.
-- name: Deploy a tmpfiles.d rule for the faillock watch target
+  notify: Load Audit Rules
+- name: Deploy a tmpfiles.d Rule for the faillock Watch Target
   ansible.builtin.copy:
     src: audit-faillock.tmpfiles.conf
     dest: /etc/tmpfiles.d/audit-faillock.conf
     owner: root
     group: root
     mode: "0644"
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.3", level2]
-
-- name: Materialise the faillock tally directory now
-  ansible.builtin.command: systemd-tmpfiles --create /etc/tmpfiles.d/audit-faillock.conf
-  changed_when: false
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.3", level2]
-
-- name: Check which audit watch targets exist
-  ansible.builtin.stat:
-    path: "{{ item.path }}"
-    follow: false
-    get_checksum: false
-    get_mime: false
-    get_attributes: false
-  loop: "{{ auditd_watches }}"
-  loop_control:
-    label: "{{ item.path }}"
-  register: auditd_watch_stat
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.3", level2]
-
-- name: Deploy the audit rule set
+  notify: Materialise faillock
+- name: Deploy the Audit Rule Set
   ansible.builtin.template:
-    src: 50-cis.rules.j2
-    dest: /etc/audit/rules.d/50-cis.rules
+    src: 50-default.rules.j2
+    dest: /etc/audit/rules.d/50-default.rules
     owner: root
     group: root
     mode: "0640"
-  vars:
-    auditd_watches_present: "{{ auditd_watch_stat.results | selectattr('stat.exists') | map(attribute='item') | list }}"
-  notify: Load audit rules
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.3", level2]
-
-- name: Scan for privileged (SUID/SGID) commands
-  ansible.builtin.script:
-    cmd: privileged-commands-scan.sh
-  register: auditd_privileged_scan
-  changed_when: false
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.3.10", level2]
-
-- name: Deploy privileged-command audit rules
-  ansible.builtin.template:
-    src: 50-privileged.rules.j2
-    dest: /etc/audit/rules.d/50-privileged.rules
-    owner: root
-    group: root
-    mode: "0640"
-  vars:
-    auditd_privileged_commands: "{{ auditd_privileged_scan.stdout_lines }}"
-  notify: Load audit rules
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.3.10", level2]
-
-- name: Deploy audit finalize rule
-  ansible.builtin.template:
-    src: 99-finalize.rules.j2
+  notify: Load Audit Rules
+- name: Deploy Audit Finalize Rule
+  ansible.builtin.copy:
+    src: 99-finalize.rules
     dest: /etc/audit/rules.d/99-finalize.rules
     owner: root
     group: root
     mode: "0640"
-  notify: Load audit rules
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.3.36", level2]
-
-# 6.2.1.2 - bring the daemon up, load the rules now (not just at the end-of-play
-# handler) and prove it is actually enforcing. A daemon that will not start, or
-# starts with `enabled 0` / an empty rule set, leaves all of section 6.2 inert;
-# the rescue surfaces why instead of failing with a bare systemd error.
-- name: Ensure auditd is running and enforcing
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.1.2", level2]
-  block:
-    - name: Ensure auditd is unmasked, enabled and active
-      ansible.builtin.systemd_service:
-        name: "{{ auditd_service }}"
-        masked: false
-        enabled: true
-        state: started
-
-    - name: Load the audit rules into the running kernel
-      ansible.builtin.command: augenrules --load
-      changed_when: false
-      when: auditd_verify_effective
-
-    - name: Refresh service facts
-      ansible.builtin.service_facts:
-      when: auditd_verify_effective
-
-    - name: Read auditd runtime status
-      ansible.builtin.command: auditctl -s
-      register: auditd_runtime_status
-      changed_when: false
-      when: auditd_verify_effective
-
-    - name: List the loaded audit rules
-      ansible.builtin.command: auditctl -l
-      register: auditd_loaded_rules
-      changed_when: false
-      when: auditd_verify_effective
-
-    - name: Assert the auditd daemon is up and enforcing
-      ansible.builtin.assert:
-        that:
-          - (ansible_facts.services[auditd_service ~ '.service'] | default({})).get('state') == 'running'
-          - "'enabled 1' in auditd_runtime_status.stdout or 'enabled 2' in auditd_runtime_status.stdout"
-          - "'No rules' not in auditd_loaded_rules.stdout"
-        fail_msg: >-
-          auditd is not enforcing (service state
-          {{ (ansible_facts.services[auditd_service ~ '.service'] | default({})).get('state') | default('unknown') }};
-          `auditctl -s` / `auditctl -l`) - section 6.2 is inert until this is fixed.
-        success_msg: "auditd active, {{ auditd_loaded_rules.stdout_lines | length }} rule lines loaded."
-      when: auditd_verify_effective
-  rescue:
-    - name: Collect auditd failure diagnostics
-      ansible.builtin.command: "{{ item }}"
-      loop:
-        - systemctl show auditd -p ActiveState,SubState,Result,ExecMainStatus,StatusText
-        - journalctl -u auditd -b --no-pager --lines 40
-      register: auditd_diag
-      changed_when: false
-      failed_when: false
-
-    - name: Fail with auditd diagnostics
-      ansible.builtin.fail:
-        msg: |-
-          auditd did not come up cleanly - section 6.2 will not be effective.
-          Common cause: verify_email=yes with no local MTA (auditd_verify_email),
-          or a bad rule failing `augenrules --load`.
-          {% for r in auditd_diag.results %}
-          $ {{ r.cmd | join(' ') }}
-          {{ r.stdout | default('') }}{{ r.stderr | default('') }}
-          {% endfor %}
-
-# --- 6.2.4 access to audit artefacts ---
-- name: Restrict the audit log directory
+  notify: Load Audit Rules
+- name: Restrict the Audit Log Directory
   ansible.builtin.file:
     path: /var/log/audit
     state: directory
     owner: root
     group: root
-    mode: "{{ auditd_log_dir_mode }}"
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.4.4", level2]
-
-- name: Find audit log files
+    mode: "0700"
+- name: Find Audit Log Files
   ansible.builtin.find:
     paths: /var/log/audit
     file_type: file
   register: auditd_log_files
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.4.1", "debian_13_cis_6.2.4.2", "debian_13_cis_6.2.4.3", level2]
-
-- name: Restrict audit log files
+- name: Restrict Audit Log Files
   ansible.builtin.file:
     path: "{{ item.path }}"
     state: file
     owner: root
     group: root
-    mode: "{{ auditd_log_mode }}"
+    mode: "0600"
   loop: "{{ auditd_log_files.files }}"
   loop_control:
     label: "{{ item.path }}"
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.4.1", "debian_13_cis_6.2.4.2", "debian_13_cis_6.2.4.3", level2]
-
-- name: Find audit configuration files
+- name: Find Audit Configuration Files
   ansible.builtin.find:
     paths: [/etc/audit, /etc/audit/rules.d]
     patterns: ["*.conf", "*.rules"]
     file_type: file
   register: auditd_conf_files
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.4.5", "debian_13_cis_6.2.4.6", "debian_13_cis_6.2.4.7", level2]
-
-- name: Restrict audit configuration files
+- name: Restrict Audit Configuration Files
   ansible.builtin.file:
     path: "{{ item.path }}"
     state: file
     owner: root
     group: root
-    mode: "{{ auditd_conf_mode }}"
+    mode: "0640"
   loop: "{{ auditd_conf_files.files }}"
   loop_control:
     label: "{{ item.path }}"
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.4.5", "debian_13_cis_6.2.4.6", "debian_13_cis_6.2.4.7", level2]
-
-- name: Restrict audit tools
+- name: Restrict Audit Tools
   ansible.builtin.file:
     path: "{{ item }}"
     state: file
@@ -256,5 +105,9 @@
     group: root
     mode: "0755"
   loop: "{{ auditd_tools }}"
-  failed_when: false
-  tags: [cis, debian_13_cis, "debian_13_cis_6.2.4.8", "debian_13_cis_6.2.4.9", "debian_13_cis_6.2.4.10", level2]
+- name: Ensure auditd is Unmasked, Enabled and Started
+  ansible.builtin.systemd_service:
+    name: "auditd"
+    masked: false
+    enabled: true
+    state: started
