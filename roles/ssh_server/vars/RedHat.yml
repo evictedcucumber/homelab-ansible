@@ -1,4 +1,0 @@
----
-ssh_server_service: sshd
-ssh_server_sftp_subsystem: "sftp /usr/libexec/openssh/sftp-server"
-ssh_server_validate_cmd: "/usr/sbin/sshd -t -f %s"

@@ -1,27 +1,8 @@
-{{ ansible_managed | comment }}
-# CIS Debian 13 Benchmark section 5.1. First occurrence of an option wins, so
-# these settings precede any Include.
-
 {% for key, value in ssh_server_config | dictsort %}
 {{ key }} {{ value }}
 {% endfor %}
 Ciphers {{ ssh_server_ciphers | join(',') }}
 KexAlgorithms {{ ssh_server_kex_algorithms | join(',') }}
 MACs {{ ssh_server_macs | join(',') }}
-{% if ssh_server_allow_users %}
-AllowUsers {{ ssh_server_allow_users | join(' ') }}
-{% endif %}
-{% if ssh_server_allow_groups %}
-AllowGroups {{ ssh_server_allow_groups | join(' ') }}
-{% endif %}
-{% if ssh_server_deny_users %}
-DenyUsers {{ ssh_server_deny_users | join(' ') }}
-{% endif %}
-{% if ssh_server_deny_groups %}
-DenyGroups {{ ssh_server_deny_groups | join(' ') }}
-{% endif %}
-
-Subsystem {{ ssh_server_sftp_subsystem }}
-{% for line in ssh_server_extra_config %}
-{{ line }}
-{% endfor %}
+AllowUsers root
+Subsystem sftp /usr/lib/openssh/sftp-server
