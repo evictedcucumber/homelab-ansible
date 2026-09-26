@@ -1,58 +1,38 @@
 ---
-# roles/services - remove/disable server and client services (CIS Debian 13
-# sections 2.1 and 2.2). Package names are Debian/Ubuntu; override for other OSes.
-
-# 2.1.x server packages + 2.2.x client packages to purge. Each maps to one or
-# more recommendations; see this role's README and the cis-benchmark repo.
 services_packages_absent:
-  # --- 3.1 network devices ---
-  - bluez  # 3.1.3 (bluetooth)
-  # --- 2.1 server services ---
-  - autofs  # 2.1.1
-  - avahi-daemon  # 2.1.2
-  - isc-dhcp-server  # 2.1.3
-  - kea  # 2.1.3
-  - bind9  # 2.1.4
-  - dnsmasq  # 2.1.5
-  - vsftpd  # 2.1.6
-  - slapd  # 2.1.7
-  - dovecot-imapd  # 2.1.8
-  - dovecot-pop3d  # 2.1.8
-  - cyrus-imapd  # 2.1.8
-  - nfs-kernel-server  # 2.1.9
-  - ypserv  # 2.1.10
-  - cups  # 2.1.11
-  - rpcbind  # 2.1.12
-  - samba  # 2.1.14
-  - snmpd  # 2.1.15
-  - telnetd  # 2.1.16
-  - inetutils-telnetd  # 2.1.16
-  - tftpd-hpa  # 2.1.17
-  - atftpd  # 2.1.17
-  - squid  # 2.1.18
-  - apache2  # 2.1.19
-  - nginx  # 2.1.19
-  - xinetd  # 2.1.20
-  - xserver-common  # 2.1.21 (L2)
-  - gdm3  # 1.7.1  (L2)
-  # --- 2.2 client packages ---
-  - nis  # 2.2.1
-  - rsh-client  # 2.2.2
-  - talk  # 2.2.3
-  - telnet  # 2.2.4
-  - inetutils-telnet  # 2.2.4
-  - ldap-utils  # 2.2.5
-  - ftp  # 2.2.6
-  - tnftp  # 2.2.6
-# 2.1.13 - keep the rsync package (CLI is useful) but mask the daemon.
-services_rsync_mask: true
-
-# 2.1.22 - force any installed MTA (exim4 / postfix) to loopback-only.
-services_mta_local_only: true
-
-# 2.1.23 (Manual) - listening sockets. Both lists hold "proto:port" strings
-# (e.g. "tcp:22"). `services_approved_always` is the baseline every host is
-# expected to expose; add host/site extras to `services_approved_listening`.
-# While `services_approved_listening` is empty the audit only reports.
-services_approved_always: ["tcp:22", "udp:323"]
-services_approved_listening: []
+  - apache2
+  - atftpd
+  - autofs
+  - avahi-daemon
+  - bind9
+  - bluez
+  - cups
+  - cyrus-imapd
+  - dnsmasq
+  - dovecot-imapd
+  - dovecot-pop3d
+  - ftp
+  - gdm3
+  - inetutils-telnet
+  - inetutils-telnetd
+  - isc-dhcp-server
+  - kea
+  - ldap-utils
+  - nfs-kernel-server
+  - nginx
+  - nis
+  - rpcbind
+  - rsh-client
+  - samba
+  - slapd
+  - snmpd
+  - squid
+  - talk
+  - telnet
+  - telnetd
+  - tftpd-hpa
+  - tnftp
+  - vsftpd
+  - xinetd
+  - xserver-common
+  - ypserv
