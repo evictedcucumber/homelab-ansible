@@ -1,46 +1,31 @@
 ---
-# CIS Debian 13 Benchmark 6.3 - Configure Integrity Checking.
-- name: Ensure AIDE packages are installed
+- name: Ensure AIDE Packages are Installed
   ansible.builtin.apt:
-    name: "{{ aide_packages }}"
+    name: [aide, aide-common]
     state: present
-  tags: [cis, debian_13_cis, "debian_13_cis_6.3.1", level1]
-
-- name: Check for the AIDE database
+- name: Check for the AIDE Database
   ansible.builtin.stat:
-    path: "{{ aide_database_path }}"
+    path: "/var/lib/aide/aide.db"
     get_checksum: false
     get_mime: false
     get_attributes: false
   register: aide_database
-  tags: [cis, debian_13_cis, "debian_13_cis_6.3.1", "debian_13_cis_6.3.3", level1]
-
-- name: Protect audit-tool integrity in the config
+- name: Protect audit-tool Integrity in the Config
   ansible.builtin.template:
     src: cis-audit-tools.j2
-    dest: "{{ aide_confd_dir }}/70_cis_audit_tools"
+    dest: "/etc/aide/aide.conf.d/70_cis_audit_tools"
     owner: root
     group: root
     mode: "0644"
-  when: aide_protect_audit_tools
   register: aide_audit_tools_confd
-  tags: [cis, debian_13_cis, "debian_13_cis_6.3.3", level2]
-
-# The Debian scripts read aide.conf.d/ directly (@@x_include), so a new snippet
-# takes effect on the next run - but the reference database must be rebuilt so
-# the daily check does not report the newly-covered files as spurious changes.
-# aideinit works on every Debian release; there is no update-aide.conf on 13.
-- name: Initialise or rebuild the AIDE database
+- name: Initialise or Rebuild the AIDE Database
   ansible.builtin.command: aideinit -y -f
   changed_when: true
   when:
     - not aide_database.stat.exists or (aide_audit_tools_confd.changed | default(false))
-  tags: [cis, debian_13_cis, "debian_13_cis_6.3.1", "debian_13_cis_6.3.3", level1]
-
-- name: Ensure the daily AIDE check timer is unmasked, enabled and active
+- name: Ensure the Daily AIDE Check Timer is Unmasked, Enabled and Active
   ansible.builtin.systemd_service:
-    name: "{{ aide_check_timer }}"
+    name: "dailyaidecheck.timer"
     masked: false
     enabled: true
     state: started
-  tags: [cis, debian_13_cis, "debian_13_cis_6.3.2", level1]
