@@ -1,8 +1,0 @@
----
-- name: Update Cache and Apply Available Upgrades
-  ansible.builtin.apt:
-    update_cache: true
-    upgrade: safe
-    autoremove: true
-    autoclean: true
-    purge: true
