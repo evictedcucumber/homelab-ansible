@@ -1,0 +1,20 @@
+---
+- name: Debian 13 Patch
+  hosts: debian_13
+  gather_facts: false
+  tasks:
+    - name: Update Cache and Apply Available Upgrades
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: safe
+        autoremove: true
+        autoclean: true
+        purge: true
+    - name: Check Whether a Reboot is Required
+      ansible.builtin.stat:
+        path: /run/reboot-required
+      register: patch_reboot_required
+    - name: Reboot to Finish Applying Upgrades
+      ansible.builtin.reboot:
+      when:
+        - patch_reboot_required.stat.exists
