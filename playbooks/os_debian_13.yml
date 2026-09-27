@@ -1,0 +1,59 @@
+---
+- name: Debian 13 Baseline
+  hosts: debian_13
+  gather_facts: false
+  tasks:
+    - name: Kernel Modules
+      ansible.builtin.import_role:
+        name: kernel_modules
+    - name: Filesystem Partitioning and Mounting
+      ansible.builtin.import_role:
+        name: filesystem_mounts
+    - name: Package Management
+      ansible.builtin.import_role:
+        name: package_management
+    - name: Mandatory Access Control - AppArmor
+      ansible.builtin.import_role:
+        name: apparmor
+    - name: Bootloader
+      ansible.builtin.import_role:
+        name: bootloader
+    - name: Process Hardening
+      ansible.builtin.import_role:
+        name: process_hardening
+    - name: Command-line Warning Banners
+      ansible.builtin.import_role:
+        name: warning_banners
+    - name: Services
+      ansible.builtin.import_role:
+        name: services
+    - name: Time Synchronization
+      ansible.builtin.import_role:
+        name: chrony
+    - name: Job Schedulers
+      ansible.builtin.import_role:
+        name: job_schedulers
+    - name: Network and Kernel Parameters
+      ansible.builtin.import_role:
+        name: sysctl
+    - name: SSH Server
+      ansible.builtin.import_role:
+        name: ssh_server
+    - name: Pluggable Authentication Modules
+      ansible.builtin.import_role:
+        name: pam
+    - name: User Accounts and Environment
+      ansible.builtin.import_role:
+        name: login_defs
+    - name: Journaling
+      ansible.builtin.import_role:
+        name: journald
+    - name: Auditing
+      ansible.builtin.import_role:
+        name: auditd
+    - name: Integrity Checking
+      ansible.builtin.import_role:
+        name: aide
+    - name: System File and Directory Access
+      ansible.builtin.import_role:
+        name: system_file_perms
