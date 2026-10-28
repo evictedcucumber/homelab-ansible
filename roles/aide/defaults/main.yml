@@ -1,3 +1,5 @@
 ---
-aide_check_timer: dailyaidecheck.timer
+aide_check_timer: aidecheck.timer
+aide_check_command: /usr/bin/aide --config /etc/aide/aide.conf --check
+aide_legacy_check_timer: dailyaidecheck.timer
 aide_audit_tools: [auditctl, auditd, ausearch, aureport, augenrules]

@@ -1,0 +1,14 @@
+[Unit]
+Description=Daily AIDE integrity check
+Documentation=man:aide(1)
+ConditionPathExists={{ aide_check_command.split()[0] }}
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart={{ aide_check_command }}
+Nice=19
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=multi-user.target

@@ -23,9 +23,27 @@
   changed_when: true
   when:
     - not aide_database.stat.exists or (aide_audit_tools_confd.changed | default(false))
-- name: Ensure the Daily AIDE Check Timer is Unmasked, Enabled and Active
+- name: Install the AIDE Check Service and Timer
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: [aidecheck.service, aidecheck.timer]
+- name: Disable the Debian Daily AIDE Check Timer to Avoid Duplicate Checks
   ansible.builtin.systemd_service:
-    name: "dailyaidecheck.timer"
+    name: "{{ aide_legacy_check_timer }}"
+    enabled: false
+    state: stopped
+    daemon_reload: true
+- name: Ensure the AIDE Check Service is Enabled
+  ansible.builtin.systemd_service:
+    name: aidecheck.service
+    enabled: true
+- name: Ensure the AIDE Check Timer is Unmasked, Enabled and Active
+  ansible.builtin.systemd_service:
+    name: "{{ aide_check_timer }}"
     masked: false
     enabled: true
     state: started
