@@ -3,3 +3,7 @@ pam_packages:
   - libpam-runtime
   - libpam-modules
   - libpam-pwquality
+# Profiles enabled with pam-auth-update (file names in /usr/share/pam-configs).
+pam_profiles: [faillock, faillock_notify, faillock_authsucc, pwquality, pwhistory]
+# Group referenced by pam_wheel.so in /etc/pam.d/su; it must stay empty.
+pam_su_group: sugroup

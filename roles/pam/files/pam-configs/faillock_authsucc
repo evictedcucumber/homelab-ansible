@@ -1,0 +1,6 @@
+Name: Reset pam_faillock Count Upon Successful Authentication
+Default: yes
+Priority: 0
+Auth-Type: Additional
+Auth:
+	sufficient	pam_faillock.so authsucc

@@ -11,8 +11,86 @@
     owner: root
     group: root
     mode: "0644"
-  loop: [faillock, faillock_notify, pwquality, pwhistory]
-  notify: Reboot
+  loop: "{{ pam_profiles }}"
+  register: pam_profile_files
+- name: Read Stock unix pam-auth-update Profile
+  ansible.builtin.slurp:
+    src: /usr/share/pam-configs/unix
+  register: pam_unix_profile
+- name: Deploy unix Profile Without nullok
+  # Derived from the packaged profile on every run so libpam-runtime upgrades
+  # are picked up. Priority 257 and Conflicts replace the stock profile.
+  ansible.builtin.copy:
+    content: >-
+      {{ pam_unix_profile.content | b64decode
+      | regex_replace('(?m)^Name:.*$', 'Name: Unix authentication (no empty passwords)')
+      | regex_replace('(?m)^Priority:.*$', 'Priority: 257\nConflicts: unix')
+      | regex_replace('[ \t]+nullok(_secure)?(?=[ \t]|$)', '', multiline=True) }}
+    dest: /usr/share/pam-configs/unix_nonullok
+    owner: root
+    group: root
+    mode: "0644"
+  register: pam_unix_nonullok_profile
+- name: Read Current PAM Common Stacks
+  ansible.builtin.slurp:
+    src: "/etc/pam.d/{{ item }}"
+  loop: [common-auth, common-account, common-password]
+  register: pam_common_stacks
+- name: Determine Whether PAM Profiles are Active
+  ansible.builtin.set_fact:
+    pam_profiles_active: >-
+      {{ (stacks['common-auth'] is search('^auth\s+required\s+pam_faillock\.so\s+preauth', multiline=True))
+      and (stacks['common-auth'] is search('^auth\s+\[default=die\]\s+pam_faillock\.so\s+authfail', multiline=True))
+      and (stacks['common-auth'] is search('^auth\s+sufficient\s+pam_faillock\.so\s+authsucc', multiline=True))
+      and (stacks['common-account'] is search('^account\s+required\s+pam_faillock\.so', multiline=True))
+      and (stacks['common-password'] is search('^password\s+requisite\s+pam_pwquality\.so', multiline=True))
+      and (stacks['common-password'] is search('^password\s+requisite\s+pam_pwhistory\.so.*\sremember=', multiline=True))
+      and not (stacks.values() | select('search', '^[^#\n]*pam_unix\.so[^#\n]*(^|\s)nullok', multiline=True) | list) }}
+  vars:
+    stacks: >-
+      {{ dict(pam_common_stacks.results | map(attribute='item')
+      | zip(pam_common_stacks.results | map(attribute='content') | map('b64decode'))) }}
+- name: Apply pam-auth-update Profiles
+  when: >-
+    not pam_profiles_active
+    or pam_profile_files is changed
+    or pam_unix_nonullok_profile is changed
+  block:
+    - name: Enable PAM Profiles
+      ansible.builtin.command:
+        argv: >-
+          {{ ['pam-auth-update', '--force', '--remove', 'unix']
+          + (['--enable'] | product(pam_profiles + ['unix_nonullok']) | flatten) }}
+      changed_when: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+    - name: Verify pam_unix Remains in the Common Stacks
+      ansible.builtin.command:
+        argv:
+          - grep
+          - -Eq
+          - "^{{ item.type }}[[:space:]].*pam_unix\\.so"
+          - "/etc/pam.d/common-{{ item.type }}"
+      loop:
+        - {type: auth}
+        - {type: account}
+        - {type: password}
+        - {type: session}
+      changed_when: false
+  rescue:
+    - name: Remove unix_nonullok Profile After Failure
+      ansible.builtin.file:
+        path: /usr/share/pam-configs/unix_nonullok
+        state: absent
+    - name: Restore Stock unix Profile After Failure
+      ansible.builtin.command:
+        argv: [pam-auth-update, --force, --enable, unix]
+      changed_when: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+    - name: Fail After Restoring Stock PAM Configuration
+      ansible.builtin.fail:
+        msg: pam-auth-update failed; the stock unix profile was restored.
 - name: Deploy /etc/security/faillock.conf
   ansible.builtin.copy:
     src: faillock.conf
@@ -21,29 +99,21 @@
     group: root
     mode: "0644"
   notify: Reboot
-- name: Ensure /etc/security/pwquality.conf.d Exists
-  ansible.builtin.file:
-    path: /etc/security/pwquality.conf.d
-    state: directory
-    owner: root
-    group: root
-    mode: "0755"
-  notify: Reboot
 - name: Deploy pwquality Policy
+  # The main file is the one scanners read (SCAP only checks it); conf.d is kept empty.
   ansible.builtin.copy:
-    src: pwquality.conf.d/50-default.conf
-    dest: /etc/security/pwquality.conf.d/50-default.conf
+    src: pwquality.conf
+    dest: /etc/security/pwquality.conf
     owner: root
     group: root
     mode: "0644"
   notify: Reboot
-- name: Find Existing pwquality.conf.d Files
+- name: Find pwquality.conf.d Files
   ansible.builtin.find:
     paths: /etc/security/pwquality.conf.d
-    excludes: ["50-default.conf"]
     file_type: file
   register: pam_pwquality_confd
-- name: Remove Unmanaged pwquality.conf.d Files
+- name: Remove pwquality.conf.d Files
   ansible.builtin.file:
     path: "{{ item.path }}"
     state: absent
@@ -59,3 +129,24 @@
     group: root
     mode: "0644"
   notify: Reboot
+- name: Ensure the su Group Exists
+  ansible.builtin.group:
+    name: "{{ pam_su_group }}"
+    state: present
+    system: true
+- name: Read su Group Members
+  ansible.builtin.getent:
+    database: group
+    key: "{{ pam_su_group }}"
+- name: Ensure the su Group is Empty
+  ansible.builtin.command:
+    argv: [gpasswd, -M, "", "{{ pam_su_group }}"]
+  when: ansible_facts.getent_group[pam_su_group][2] | length > 0
+  changed_when: true
+- name: Restrict su to the su Group
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/su
+    regexp: ^\s*#?\s*auth\s+required\s+pam_wheel\.so
+    line: "auth       required   pam_wheel.so use_uid group={{ pam_su_group }}"
+    insertbefore: ^@include\s+common-auth
+    state: present
