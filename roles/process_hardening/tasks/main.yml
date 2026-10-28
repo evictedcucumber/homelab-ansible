@@ -12,6 +12,25 @@
     owner: root
     group: root
     mode: "0644"
+- name: Ensure a Hard Limit on Core File Size in limits.conf
+  ansible.builtin.lineinfile:
+    path: /etc/security/limits.conf
+    regexp: '^\s*\*\s+(hard|-)\s+core\s+'
+    line: "* hard core 0"
+    insertbefore: '^# End of file'
+    owner: root
+    group: root
+    mode: "0644"
+- name: Check for the Distro Core Limit Drop-in
+  ansible.builtin.stat:
+    path: /etc/security/limits.d/10-coredump-debian.conf
+  register: process_hardening_distro_core_limit
+- name: Override the Distro Unlimited Core Limit Drop-in
+  ansible.builtin.lineinfile:
+    path: /etc/security/limits.d/10-coredump-debian.conf
+    regexp: '^\s*\*\s+(hard|-)\s+core\s+'
+    line: "* hard core 0"
+  when: process_hardening_distro_core_limit.stat.exists
 - name: Ensure systemd-coredump Drop-In Directory Exists
   ansible.builtin.file:
     path: /etc/systemd/coredump.conf.d
