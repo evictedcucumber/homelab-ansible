@@ -18,7 +18,7 @@ ssh_server_config:
   MaxSessions: "10"
   MaxStartups: "10:30:60"
   ClientAliveInterval: "15"
-  ClientAliveCountMax: "2"
+  ClientAliveCountMax: "3"
   Banner: "/etc/issue.net"
   PrintMotd: "no"
   AuthorizedKeysFile: ".ssh/authorized_keys"
@@ -31,7 +31,7 @@ ssh_server_ciphers:
   - aes128-ctr
 ssh_server_kex_algorithms:
   - mlkem768x25519-sha256
-  - sntrup761x25519-sha512
+  - sntrup761x25519-sha512@openssh.com
   - curve25519-sha256
   - curve25519-sha256@libssh.org
   - diffie-hellman-group16-sha512

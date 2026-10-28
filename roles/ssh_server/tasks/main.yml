@@ -1,7 +1,7 @@
 ---
 - name: Ensure sshd Service is Unmasked, Enabled, and Running
   ansible.builtin.systemd_service:
-    name: "chrony"
+    name: ssh
     masked: false
     enabled: true
     state: started
