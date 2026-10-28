@@ -15,17 +15,21 @@
     group: shadow
     mode: "0640"
   loop: [shadow, gshadow]
-# SSG requires the backups to be root:root and mode 0000 (stricter than the
-# CIS 0640 root:shadow). Shadow tools copy the live file's owner/mode when they
-# write the backup, so this must be re-asserted on every run.
+# SSG requires the backups to be mode 0000 (stricter than the CIS 0640), with
+# group shadow on shadow- but root on gshadow-. Shadow tools copy the live
+# file's owner/mode when they write the backup, so re-assert on every run.
 - name: Ensure Access to shadow-/gshadow- Backups is Configured
   ansible.builtin.file:
-    path: "/etc/{{ item }}"
+    path: "/etc/{{ item.name }}"
     state: file
     owner: root
-    group: root
+    group: "{{ item.group }}"
     mode: "0000"
-  loop: [shadow-, gshadow-]
+  loop:
+    - {name: shadow-, group: shadow}
+    - {name: gshadow-, group: root}
+  loop_control:
+    label: "{{ item.name }}"
 - name: Check for /etc/security/opasswd and its Backup
   ansible.builtin.stat:
     path: "/etc/security/{{ item }}"
