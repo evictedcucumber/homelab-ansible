@@ -78,7 +78,7 @@
       {% if f[0] | length > 0 and f[0][0] not in ['!', '*']
       and ((f[3] | string) in ['', 'None'] or (f[3] | int(99999) > login_defs_pass_max_days)
       or (f[2] | int(0) < login_defs_pass_min_days)) %}
-      {% set age = (ansible_facts.date_time.epoch | int // 86400) - (f[1] | int(0)) %}
+      {% set age = (now(utc=true).timestamp() | int // 86400) - (f[1] | int(0)) %}
       {% if (f[1] | int(0)) > 0 and age < login_defs_pass_max_days %}
       {% set ns.fix = ns.fix + [name] %}
       {% else %}
