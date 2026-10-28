@@ -2,3 +2,4 @@
 .ansible
 
 **/__pycache__
+/.claude/worktrees
