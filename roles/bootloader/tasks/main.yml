@@ -13,6 +13,14 @@
     regexp: '^(CLASS="(?:(?!--unrestricted).)*?)"\s*$'
     replace: '\1 --unrestricted"'
   notify: [Update Grub Config, Reboot]
+- name: Assert Bootloader Password Hash is a GRUB PBKDF2 SHA512 Hash
+  ansible.builtin.assert:
+    that:
+      - bootloader_password_hash is string
+      - bootloader_password_hash is match('^grub\\.pbkdf2\\.sha512\\.[0-9]+\\.[0-9A-Fa-f]+\\.[0-9A-Fa-f]+$')
+    fail_msg: bootloader_password_hash must be a grub.pbkdf2.sha512.<rounds>.<salt>.<hash> value from grub-mkpasswd-pbkdf2
+    quiet: true
+  no_log: true
 - name: Deploy Bootloader Password
   ansible.builtin.template:
     src: 40_cis_password.j2
