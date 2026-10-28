@@ -54,3 +54,67 @@
     quiet: true
     that: (ansible_facts.getent_shadow['root'][0] | default('')) | length > 0
     fail_msg: "root's password field is empty - it must be set or locked."
+- name: Set umask in /etc/bash.bashrc
+  ansible.builtin.lineinfile:
+    path: /etc/bash.bashrc
+    regexp: ^\s*umask\s
+    line: "umask {{ login_defs_umask }}"
+    state: present
+- name: Read Shadow Database
+  ansible.builtin.getent:
+    database: shadow
+  no_log: true
+- name: Read Passwd Database
+  ansible.builtin.getent:
+    database: passwd
+- name: Find Accounts with Password Aging to Fix
+  # Shadow fields: password, last change, min, max, warn, inactive, expire, flag.
+  # Accounts whose password is already older than the new maximum are reported
+  # instead of changed, because chage would expire the password immediately.
+  ansible.builtin.set_fact:
+    login_defs_aging_fix: >-
+      {% set ns = namespace(fix=[], skip=[]) %}
+      {% for name, f in ansible_facts.getent_shadow.items() %}
+      {% if f[0] | length > 0 and f[0][0] not in ['!', '*']
+      and ((f[3] | string) in ['', 'None'] or (f[3] | int(99999) > login_defs_pass_max_days)
+      or (f[2] | int(0) < login_defs_pass_min_days)) %}
+      {% set age = (ansible_facts.date_time.epoch | int // 86400) - (f[1] | int(0)) %}
+      {% if (f[1] | int(0)) > 0 and age < login_defs_pass_max_days %}
+      {% set ns.fix = ns.fix + [name] %}
+      {% else %}
+      {% set ns.skip = ns.skip + [name] %}
+      {% endif %}
+      {% endif %}
+      {% endfor %}
+      {{ {'fix': ns.fix, 'skip': ns.skip} | to_json }}
+  no_log: true
+- name: Set Password Aging on Existing Accounts
+  ansible.builtin.command:
+    argv:
+      - chage
+      - --mindays
+      - "{{ login_defs_pass_min_days }}"
+      - --maxdays
+      - "{{ login_defs_pass_max_days }}"
+      - "{{ item }}"
+  loop: "{{ (login_defs_aging_fix | from_json).fix }}"
+  changed_when: true
+  no_log: true
+- name: Warn About Passwords Older Than the Maximum Age
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: the password of {{ item }} is older than {{ login_defs_pass_max_days }} days
+      (or has no change date), so its aging was not changed to avoid expiring it
+      immediately. Rotate the password first, e.g. playbooks/once-off/change-root-password.yml.
+  loop: "{{ (login_defs_aging_fix | from_json).skip }}"
+- name: Set nologin Shell for System Accounts
+  ansible.builtin.user:
+    name: "{{ item.key }}"
+    shell: "{{ login_defs_nologin_shell }}"
+  loop: "{{ ansible_facts.getent_passwd | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  when:
+    - item.value[1] | int(1000000) < login_defs_uid_min
+    - item.key not in login_defs_shell_exempt_users
+    - item.value[5] not in login_defs_nologin_shells

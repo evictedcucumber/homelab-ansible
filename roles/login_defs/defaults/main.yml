@@ -1,0 +1,10 @@
+---
+login_defs_pass_max_days: 365
+login_defs_pass_min_days: 7
+login_defs_uid_min: 1000
+login_defs_umask: "027"
+# System accounts allowed to keep their login shell.
+login_defs_shell_exempt_users: [root, sync, shutdown, halt]
+# Shells that do not allow interactive logins.
+login_defs_nologin_shells: [/usr/sbin/nologin, /sbin/nologin, /bin/sync, /sbin/shutdown, /sbin/halt]
+login_defs_nologin_shell: /usr/sbin/nologin

@@ -11,7 +11,7 @@ KILLCHAR                025
 HOME_MODE               0700
 UMASK                   027
 PASS_MAX_DAYS           365
-PASS_MIN_DAYS           1
+PASS_MIN_DAYS           7
 PASS_WARN_AGE           7
 UID_MIN                 1000
 UID_MAX                 60000
