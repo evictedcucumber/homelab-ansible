@@ -1,0 +1,6 @@
+---
+# Single source of truth for the settings that SSG reads from
+# /etc/systemd/journald.conf and that the drop-in also sets.
+journald_storage: persistent
+journald_compress: "yes"
+journald_forward_to_syslog: "no"

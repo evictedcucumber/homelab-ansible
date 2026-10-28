@@ -31,12 +31,29 @@
     group: root
     mode: "0755"
 - name: Deploy journald Hardening Drop-in
-  ansible.builtin.copy:
-    src: journald.conf.d/60-default.conf
+  ansible.builtin.template:
+    src: 60-default.conf.j2
     dest: /etc/systemd/journald.conf.d/60-default.conf
     owner: root
     group: root
     mode: "0644"
+  notify: Restart journald
+- name: Set journald Options in the Main journald.conf
+  community.general.ini_file:
+    path: /etc/systemd/journald.conf
+    section: Journal
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    no_extra_spaces: true
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - {key: Storage, value: "{{ journald_storage }}"}
+    - {key: Compress, value: "{{ journald_compress }}"}
+    - {key: ForwardToSyslog, value: "{{ journald_forward_to_syslog }}"}
+  loop_control:
+    label: "{{ item.key }}"
   notify: Restart journald
 - name: Gather Package Facts
   ansible.builtin.package_facts:
