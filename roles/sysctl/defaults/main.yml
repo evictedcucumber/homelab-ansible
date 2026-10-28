@@ -1,9 +1,12 @@
 ---
+# Prefix sorts after /usr/lib/sysctl.d/50-default.conf (which sets
+# net.ipv4.conf.*.rp_filter = 2); systemd-sysctl applies files from all
+# sysctl.d dirs in filename order, so a lower prefix would be overridden at boot.
 sysctl_hardening_files:
-  dev: /etc/sysctl.d/20-dev.conf
-  fs: /etc/sysctl.d/20-fs.conf
-  kernel: /etc/sysctl.d/20-kernel.conf
-  net: /etc/sysctl.d/20-network.conf
+  dev: /etc/sysctl.d/60-dev.conf
+  fs: /etc/sysctl.d/60-fs.conf
+  kernel: /etc/sysctl.d/60-kernel.conf
+  net: /etc/sysctl.d/60-network.conf
 sysctl_hardening:
   dev:
     tty:
@@ -19,7 +22,7 @@ sysctl_hardening:
           send_redirects: 0
           accept_redirects: 0
           secure_redirects: 0
-          # rp_filter: 1  # TODO: always shows changed
+          rp_filter: 1
           accept_source_route: 0
           log_martians: 1
         default:
@@ -27,7 +30,7 @@ sysctl_hardening:
           send_redirects: 0
           accept_redirects: 0
           secure_redirects: 0
-          # rp_filter: 1  # TODO: always shows changed
+          rp_filter: 1
           accept_source_route: 0
           log_martians: 1
       icmp_ignore_bogus_error_responses: 1

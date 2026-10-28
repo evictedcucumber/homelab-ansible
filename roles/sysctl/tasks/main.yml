@@ -34,3 +34,15 @@
   loop_control:
     label: "{{ item.key }}"
   notify: Reboot
+- name: Deploy sysctl Re-Apply After Network Unit
+  ansible.builtin.copy:
+    src: sysctl-reapply-network.service
+    dest: /etc/systemd/system/sysctl-reapply-network.service
+    owner: root
+    group: root
+    mode: "0644"
+- name: Enable sysctl Re-Apply After Network Unit
+  ansible.builtin.systemd_service:
+    name: sysctl-reapply-network.service
+    enabled: true
+    daemon_reload: true
