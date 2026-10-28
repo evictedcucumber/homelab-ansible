@@ -14,7 +14,18 @@
     owner: root
     group: shadow
     mode: "0640"
-  loop: [shadow, shadow-, gshadow, gshadow-]
+  loop: [shadow, gshadow]
+# SSG requires the backups to be root:root and mode 0000 (stricter than the
+# CIS 0640 root:shadow). Shadow tools copy the live file's owner/mode when they
+# write the backup, so this must be re-asserted on every run.
+- name: Ensure Access to shadow-/gshadow- Backups is Configured
+  ansible.builtin.file:
+    path: "/etc/{{ item }}"
+    state: file
+    owner: root
+    group: root
+    mode: "0000"
+  loop: [shadow-, gshadow-]
 - name: Check for /etc/security/opasswd and its Backup
   ansible.builtin.stat:
     path: "/etc/security/{{ item }}"
@@ -31,3 +42,29 @@
   loop_control:
     label: "{{ item.item }}"
   when: item.stat.exists
+- name: Check for Log Files Created World-Readable by dpkg and the Installer
+  ansible.builtin.stat:
+    path: "{{ item }}"
+    get_checksum: false
+    get_mime: false
+    get_attributes: false
+  register: system_file_perms_var_log_stat
+  loop: "{{ system_file_perms_var_log_files }}"
+- name: Ensure /var/log Files are not Group-Writable or Accessible by Others
+  ansible.builtin.file:
+    path: "{{ item.item }}"
+    state: file
+    mode: "g-w,o-rwx"
+  loop: "{{ system_file_perms_var_log_stat.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: item.stat.exists
+- name: Ensure logrotate Recreates dpkg/alternatives Logs with Mode 0640
+  ansible.builtin.lineinfile:
+    path: "{{ item.path }}"
+    regexp: '^(\s*)create\s+[0-7]{3,4}\s+root\s+root\s*$'
+    line: '\1create {{ item.mode | regex_replace("^0", "") }} root root'
+    backrefs: true
+  loop: "{{ system_file_perms_logrotate_configs }}"
+  loop_control:
+    label: "{{ item.path }}"
