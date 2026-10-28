@@ -1,6 +1,4 @@
 ---
-ansible_ssh_private_key_file: ~/.ssh/ansible-control-node.key
-ansible_ssh_public_key_file: ~/.ssh/ansible-control-node.key.pub
 filesystem_mounts_block:
   - {path: /tmp, src: /dev/mapper/vg0-tmp, opts: 'defaults,rw,nosuid,nodev,noexec,relatime'}
   - {path: /home, src: /dev/mapper/vg0-home, opts: 'defaults,nosuid,nodev,relatime'}
@@ -8,3 +6,7 @@ filesystem_mounts_block:
   - {path: /var/tmp, src: /dev/mapper/vg0-vartmp, opts: 'defaults,nosuid,nodev,noexec,relatime'}
   - {path: /var/log, src: /dev/mapper/vg0-varlog, opts: 'defaults,nosuid,nodev,noexec,relatime'}
   - {path: /var/log/audit, src: /dev/mapper/vg0-audit, opts: 'defaults,nosuid,nodev,noexec,relatime'}
+package_management_sources:
+  - debian.sources
+  - proxmox.sources
+proxmox_ve_remove_os_prober: true
